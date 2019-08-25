@@ -16,8 +16,12 @@ import subprocess
 import shutil
 
 work_folder = "work"
+
 SDL2_filebase = "SDL2-2.0.10"
 SDL2_urlbase = "https://www.libsdl.org/release/" + SDL2_filebase
+
+glm_filebase = "glm-0.9.9.5"
+glm_urlbase = "https://github.com/g-truc/glm/releases/download/0.9.9.5/" + glm_filebase
 
 if not os.path.exists(work_folder):
 	print("Creating work folder '" + work_folder + "'")
@@ -87,7 +91,23 @@ def build_SDL2():
 	shutil.copy(SDL2_dir + "/README-SDL.txt", "windows/dist/")
 	shutil.copytree(SDL2_dir + "/include", "windows/include/SDL2/")
 
+def build_glm():
+	glm_dir = work_folder + "/glm"
+	print("Cleaning any existing glm...")
 
+	remove_if_exists(glm_dir)
+
+	remove_if_exists("windows/include/glm/")
+
+	print("Fetching glm...")
+	fetch_file(glm_urlbase + ".zip", work_folder + "/" + glm_filebase + ".zip")
+	unzip_file(work_folder + "/" + glm_filebase + ".zip", work_folder)
+
+	print("Copying glm files...")
+	shutil.copytree(glm_dir + "/glm", "windows/include/glm/")
 
 if "SDL2" in sys.argv[1:]:
 	build_SDL2();
+
+if "glm" in sys.argv[1:]:
+	build_glm();
