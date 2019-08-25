@@ -58,14 +58,8 @@ def build_SDL2():
 	SDL2_dir = work_folder + "/" + SDL2_filebase
 
 	print("Cleaning any existing SDL2...")
-
 	remove_if_exists(SDL2_dir)
-
-	remove_if_exists("windows/lib/SDL2.lib")
-	remove_if_exists("windows/lib/SDL2main.lib")
-	remove_if_exists("windows/dist/README-SDL.txt")
-	remove_if_exists("windows/dist/SDL2.dll")
-	remove_if_exists("windows/include/SDL2/")
+	remove_if_exists("windows/SDL2/")
 
 	print("Fetching SDL2...")
 
@@ -82,29 +76,27 @@ def build_SDL2():
 
 
 	print("Copying SDL2 files...")
-	os.makedirs("windows/lib", exist_ok=True)
-	os.makedirs("windows/dist", exist_ok=True)
-	os.makedirs("windows/include", exist_ok=True)
-	shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2.lib", "windows/lib/")
-	shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2main.lib", "windows/lib/")
-	shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2.dll", "windows/dist/")
-	shutil.copy(SDL2_dir + "/README-SDL.txt", "windows/dist/")
-	shutil.copytree(SDL2_dir + "/include", "windows/include/SDL2/")
+	os.makedirs("windows/SDL2/lib", exist_ok=True)
+	os.makedirs("windows/SDL2/dist", exist_ok=True)
+	shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2.lib", "windows/SDL2/lib/")
+	shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2main.lib", "windows/SDL2/lib/")
+	shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2.dll", "windows/SDL2/dist/")
+	shutil.copy(SDL2_dir + "/README-SDL.txt", "windows/SDL2/dist/")
+	shutil.copytree(SDL2_dir + "/include", "windows/SDL2/include")
 
 def build_glm():
 	glm_dir = work_folder + "/glm"
 	print("Cleaning any existing glm...")
-
 	remove_if_exists(glm_dir)
-
-	remove_if_exists("windows/include/glm/")
+	remove_if_exists("windows/glm/")
 
 	print("Fetching glm...")
 	fetch_file(glm_urlbase + ".zip", work_folder + "/" + glm_filebase + ".zip")
 	unzip_file(work_folder + "/" + glm_filebase + ".zip", work_folder)
 
 	print("Copying glm files...")
-	shutil.copytree(glm_dir + "/glm", "windows/include/glm/")
+	os.makedirs("windows/glm/include", exist_ok=True)
+	shutil.copytree(glm_dir + "/glm/", "windows/glm/include/glm/")
 
 if "SDL2" in sys.argv[1:]:
 	build_SDL2();
