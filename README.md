@@ -2,6 +2,10 @@
 
 This repository's releases section contains pre-compiled library packages for our target systems: Linux, Windows, and MacOS.
 
+Contents:
+ - [SDL2](http://libsdl.org/)
+ - [glm](https://glm.g-truc.net/)
+
 ## Windows Notes:
 
 Libraries compiled with, and intended to be used with, Visual Studio Community 2019.
