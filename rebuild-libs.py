@@ -14,6 +14,19 @@ import urllib.request
 import os
 import subprocess
 import shutil
+import platform
+import re
+
+if platform.system() == 'Linux':
+	target = 'linux'
+elif platform.system() == 'Darwin':
+	target = 'macos'
+elif platform.system() == 'Windows':
+	target = 'windows'
+else:
+	exit("Unknown system '" + platform.system() + "'")
+
+print("Will build for '" + target + "'")
 
 work_folder = "work"
 
@@ -22,6 +35,13 @@ SDL2_urlbase = "https://www.libsdl.org/release/" + SDL2_filebase
 
 glm_filebase = "glm-0.9.9.5"
 glm_urlbase = "https://github.com/g-truc/glm/releases/download/0.9.9.5/" + glm_filebase
+
+zlib_filebase = "zlib-1.2.11"
+if target == 'windows':
+	#for whatever reason, zipfile releases are named oddly:
+	zlib_url = "http://zlib.net/zlib" +re.sub(r'[^0-9]','', zlib_filebase) + ".zip"
+else:
+	zlib_url = "http://zlib.net/" + zlib_filebase + ".tar.gz"
 
 if not os.path.exists(work_folder):
 	print("Creating work folder '" + work_folder + "'")
@@ -40,6 +60,7 @@ def remove_if_exists(path):
 		os.remove(path)
 
 def unzip_file(filename, folder):
+	assert(target == 'windows')
 	run_command([
 		"C:\\Program Files\\7-Zip\\7z.exe",
 		"x",
@@ -59,7 +80,7 @@ def build_SDL2():
 
 	print("Cleaning any existing SDL2...")
 	remove_if_exists(SDL2_dir)
-	remove_if_exists("windows/SDL2/")
+	remove_if_exists(target + "/SDL2/")
 
 	print("Fetching SDL2...")
 
@@ -76,30 +97,60 @@ def build_SDL2():
 
 
 	print("Copying SDL2 files...")
-	os.makedirs("windows/SDL2/lib", exist_ok=True)
-	os.makedirs("windows/SDL2/dist", exist_ok=True)
-	shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2.lib", "windows/SDL2/lib/")
-	shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2main.lib", "windows/SDL2/lib/")
-	shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2.dll", "windows/SDL2/dist/")
-	shutil.copy(SDL2_dir + "/README-SDL.txt", "windows/SDL2/dist/")
-	shutil.copytree(SDL2_dir + "/include", "windows/SDL2/include")
+	os.makedirs(target + "/SDL2/lib", exist_ok=True)
+	os.makedirs(target + "/SDL2/dist", exist_ok=True)
+	if target == 'windows':
+		shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2.lib", target + "/SDL2/lib/")
+		shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2main.lib", target + "/SDL2/lib/")
+	shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2.dll", target + "/SDL2/dist/")
+	shutil.copy(SDL2_dir + "/README-SDL.txt", target + "/SDL2/dist/")
+	shutil.copytree(SDL2_dir + "/include/", target + "/SDL2/include/")
 
 def build_glm():
 	glm_dir = work_folder + "/glm"
 	print("Cleaning any existing glm...")
 	remove_if_exists(glm_dir)
-	remove_if_exists("windows/glm/")
+	remove_if_exists(target + "/glm/")
 
 	print("Fetching glm...")
 	fetch_file(glm_urlbase + ".zip", work_folder + "/" + glm_filebase + ".zip")
 	unzip_file(work_folder + "/" + glm_filebase + ".zip", work_folder)
 
 	print("Copying glm files...")
-	os.makedirs("windows/glm/include", exist_ok=True)
-	shutil.copytree(glm_dir + "/glm/", "windows/glm/include/glm/")
+	os.makedirs(target + "/glm/include", exist_ok=True)
+	shutil.copytree(glm_dir + "/glm/", target + "/glm/include/glm/")
+
+def build_zlib():
+	zlib_dir = work_folder + "/" + zlib_filebase
+	#print("Cleaning any existing glm...")
+	#remove_if_exists(zlib_dir)
+	#remove_if_exists(target + "/zlib/")
+
+	#print("Fetching zlib...")
+	#fetch_file(zlib_url, work_folder + "/" + zlib_filebase + ".zip")
+	#unzip_file(work_folder + "/" + zlib_filebase + ".zip", work_folder)
+
+	print("Building zlib...")
+	run_command([
+		'nmake',
+		'-f',
+		'win32/Makefile.msc'
+	], cwd=zlib_dir)
+
+	print("Copying zlib files...")
+	os.makedirs(target + "/zlib/lib", exist_ok=True)
+	os.makedirs(target + "/zlib/include", exist_ok=True)
+	if target == 'windows':
+		shutil.copy(zlib_dir + "/zlib.lib", target + "/zlib/lib/")
+		shutil.copy(zlib_dir + "/zlib.pdb", target + "/zlib/lib/")
+	shutil.copy(zlib_dir + "/zconf.h", target + "/zlib/include/")
+	shutil.copy(zlib_dir + "/zlib.h", target + "/zlib/include/")
 
 if "SDL2" in sys.argv[1:]:
 	build_SDL2();
 
 if "glm" in sys.argv[1:]:
 	build_glm();
+
+if "zlib" in sys.argv[1:]:
+	build_zlib();
