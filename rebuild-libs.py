@@ -5,7 +5,7 @@ import sys
 if len(sys.argv) == 1:
 	print("********************************************************")
 	print("* if you just want to use this package, grab a release *")
-	print("* from https://github.com/ixchow/kit-libs-win/releases *")
+	print("*   from https://github.com/15-466/nest-libs/releases  *")
 	print("*    This rebuild script may be full of ugly hacks!    *")
 	print("********************************************************")
 	exit(0)
