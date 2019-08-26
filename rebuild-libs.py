@@ -43,6 +43,13 @@ if target == 'windows':
 else:
 	zlib_url = "http://zlib.net/" + zlib_filebase + ".tar.gz"
 
+if target == 'windows':
+	libpng_filebase = "lpng1637"
+	libpng_url = "http://prdownloads.sourceforge.net/libpng/" + libpng_filebase + ".zip?download"
+else:
+	#TODO: files for *nix build
+	pass
+
 if not os.path.exists(work_folder):
 	print("Creating work folder '" + work_folder + "'")
 	os.mkdir(work_folder)
@@ -122,13 +129,13 @@ def build_glm():
 
 def build_zlib():
 	zlib_dir = work_folder + "/" + zlib_filebase
-	#print("Cleaning any existing glm...")
-	#remove_if_exists(zlib_dir)
-	#remove_if_exists(target + "/zlib/")
+	print("Cleaning any existing zlib...")
+	remove_if_exists(zlib_dir)
+	remove_if_exists(target + "/zlib/")
 
-	#print("Fetching zlib...")
-	#fetch_file(zlib_url, work_folder + "/" + zlib_filebase + ".zip")
-	#unzip_file(work_folder + "/" + zlib_filebase + ".zip", work_folder)
+	print("Fetching zlib...")
+	fetch_file(zlib_url, work_folder + "/" + zlib_filebase + ".zip")
+	unzip_file(work_folder + "/" + zlib_filebase + ".zip", work_folder)
 
 	print("Building zlib...")
 	run_command([
@@ -146,11 +153,56 @@ def build_zlib():
 	shutil.copy(zlib_dir + "/zconf.h", target + "/zlib/include/")
 	shutil.copy(zlib_dir + "/zlib.h", target + "/zlib/include/")
 
-if "SDL2" in sys.argv[1:]:
+def build_libpng():
+	libpng_dir = work_folder + "/" + libpng_filebase
+
+	print("Cleaning any existing libpng...")
+	remove_if_exists(libpng_dir)
+	remove_if_exists(target + "/libpng/")
+
+	print("Fetching libpng...")
+	fetch_file(libpng_url, work_folder + "/" + libpng_filebase + ".zip")
+	unzip_file(work_folder + "/" + libpng_filebase + ".zip", work_folder)
+
+	print("Building libpng...")
+	#Patch makefile:
+	with open(libpng_dir + "/scripts/makefile.vcwin32", "r") as f:
+		with open(libpng_dir + "/scripts/makefile.vcwin32.patched", "w") as o:
+			for line in f:
+				line = line.replace("-I..\\zlib","-I..\\..\\windows\\zlib\\include")
+				line = line.replace("-..\\zlib\\zlib.lib","..\\..\\windows\\zlib\\lib\\zlib.lib")
+				o.write(line)
+
+	print("Building libpng...")
+	run_command([
+		'nmake',
+		'-f',
+		'scripts/makefile.vcwin32.patched'
+	], cwd=libpng_dir)
+
+
+	print("Copying libpng files...")
+	os.makedirs(target + "/libpng/lib", exist_ok=True)
+	os.makedirs(target + "/libpng/include", exist_ok=True)
+	if target == 'windows':
+		shutil.copy(libpng_dir + "/libpng.lib", target + "/libpng/lib/")
+	shutil.copy(libpng_dir + "/png.h", target + "/libpng/include/")
+	shutil.copy(libpng_dir + "/pngconf.h", target + "/libpng/include/")
+	shutil.copy(libpng_dir + "/pnglibconf.h", target + "/libpng/include/")
+
+to_build = sys.argv[1:]
+
+if "all" in to_build:
+	to_build = ["SDL2", "glm", "zlib", "libpng"]
+
+if "SDL2" in to_build:
 	build_SDL2();
 
-if "glm" in sys.argv[1:]:
+if "glm" in to_build:
 	build_glm();
 
-if "zlib" in sys.argv[1:]:
+if "zlib" in to_build:
 	build_zlib();
+
+if "libpng" in to_build:
+	build_libpng();
