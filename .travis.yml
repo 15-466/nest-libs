@@ -1,0 +1,3 @@
+install: skip
+script: ./rebuild-libs.py
+deploy: skip
