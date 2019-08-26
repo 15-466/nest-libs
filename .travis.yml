@@ -9,8 +9,8 @@ language: cpp
 install: skip
 
 before_install:
-  - if [ "$TRAVIS_OS_NAME" = "windows" ]; python -V ; fi
-  - if [ "$TRAVIS_OS_NAME" = "windows" ]; python3 -V ; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then python -V ; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then python3 -V ; fi
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install 7zip ; fi
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install python3 ; fi
 
