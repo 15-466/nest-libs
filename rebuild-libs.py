@@ -19,6 +19,8 @@ import re
 
 tag = "0.0.pre0" #TODO: figure out how to read back from git somehow
 
+min_osx_version='10.7'
+
 if platform.system() == 'Linux':
 	target = 'linux'
 elif platform.system() == 'Darwin':
@@ -29,6 +31,11 @@ else:
 	exit("Unknown system '" + platform.system() + "'")
 
 print("Will build for '" + target + "'")
+
+if target == 'macos':
+	if os.path.exists('/usr/local/bin/ranlib'):
+		print(" *** WARNING: having brew binutils installed breaks things badly *** ")
+		sleep(1)
 
 work_folder = "work"
 
@@ -122,33 +129,66 @@ def build_SDL2():
 		os.mkdir(SDL2_dir + '/build')
 		env = os.environ.copy()
 		prefix = os.getcwd() + '/' + SDL2_dir + '/out'
-		run_command(['../configure', '--prefix=' + prefix,
-			'--disable-shared', '--enable-static',
-			'--disable-render', '--disable-haptic', '--disable-file', '--disable-filesystem', '--disable-loadso', '--disable-power',
-			'--enable-sse2',
-			'--enable-alsa',
-			'--disable-oss',
-			'--disable-esd',
-			'--disable-pulseaudio',
-			'--disable-arts',
-			'--disable-nas',
-			'--disable-diskaudio',
-			'--disable-dummyaudio',
-			'--disable-sndio',
-			'--enable-video-x11',
-			'--disable-video-cocoa',
-			'--disable-video-directfb',
-			'--disable-video-vulkan',
-			'--disable-video-dummy',
-			'--enable-video-opengl',
-			'--disable-video-opengles',
-			'--disable-input-tslib',
-			'--enable-pthreads',
-			'--enable-pthread-sem',
-			'--disable-directx',
-			'--disable-render',
-			'--enable-sdl-dlopen',
-		],env=env,cwd=SDL2_dir + '/build')
+		if target == 'macos':
+			env['CFLAGS'] = '-mmacosx-version-min=' + min_osx_version
+			run_command(['../configure', '--prefix=' + prefix,
+				'--disable-shared', '--enable-static',
+				'--disable-render',
+				#'--disable-haptic', #force feedback framework required by joystick code anyway
+				#'--disable-file', '--disable-filesystem', #can't disable without link errors
+				'--disable-loadso', '--disable-power',
+				'--enable-sse2',
+				'--disable-oss',
+				'--disable-alsa',
+				'--disable-esd',
+				'--disable-pulseaudio',
+				'--disable-arts',
+				'--disable-nas',
+				'--disable-diskaudio',
+				'--disable-dummyaudio',
+				'--disable-sndio',
+				'--disable-video-x11',
+				'--enable-video-cocoa',
+				'--disable-video-directfb',
+				'--disable-video-vulkan',
+				'--disable-video-dummy',
+				'--enable-video-opengl',
+				'--disable-video-opengles',
+				'--disable-input-tslib',
+				'--enable-pthreads',
+				'--enable-pthread-sem',
+				'--disable-directx',
+				'--disable-render',
+				'--enable-sdl-dlopen',
+			],env=env,cwd=SDL2_dir + '/build')
+		else:
+			run_command(['../configure', '--prefix=' + prefix,
+				'--disable-shared', '--enable-static',
+				'--disable-render', '--disable-haptic', '--disable-file', '--disable-filesystem', '--disable-loadso', '--disable-power',
+				'--enable-sse2',
+				'--disable-oss',
+				'--enable-alsa',
+				'--disable-esd',
+				'--disable-pulseaudio',
+				'--disable-arts',
+				'--disable-nas',
+				'--disable-diskaudio',
+				'--disable-dummyaudio',
+				'--disable-sndio',
+				'--enable-video-x11',
+				'--disable-video-cocoa',
+				'--disable-video-directfb',
+				'--disable-video-vulkan',
+				'--disable-video-dummy',
+				'--enable-video-opengl',
+				'--disable-video-opengles',
+				'--disable-input-tslib',
+				'--enable-pthreads',
+				'--enable-pthread-sem',
+				'--disable-directx',
+				'--disable-render',
+				'--enable-sdl-dlopen',
+			],env=env,cwd=SDL2_dir + '/build')
 		run_command(['make'], cwd=SDL2_dir + '/build')
 		run_command(['make', 'install'], cwd=SDL2_dir + '/build')
 
@@ -194,6 +234,8 @@ def build_glm():
 	os.makedirs(target + "/glm/include", exist_ok=True)
 	shutil.copytree(glm_dir + "/glm/", target + "/glm/include/glm/")
 
+
+
 def build_zlib():
 	zlib_dir = work_folder + "/" + zlib_filebase
 	print("Cleaning any existing zlib...")
@@ -211,14 +253,12 @@ def build_zlib():
 
 	print("Building zlib...")
 	if target == 'windows':
-		run_command([
-			'nmake',
-			'-f',
-			'win32/Makefile.msc'
-		], cwd=zlib_dir)
+		run_command([ 'nmake', '-f', 'win32/Makefile.msc' ], cwd=zlib_dir)
 	else:
 		env = os.environ.copy()
 		env['prefix'] = 'out'
+		if target == 'macos':
+			env['CFLAGS'] = '-mmacosx-version-min=' + min_osx_version
 		run_command(['./configure', '--static'], env=env, cwd=zlib_dir)
 		run_command(['make'], cwd=zlib_dir)
 		run_command(['make', 'install'], cwd=zlib_dir)
@@ -270,6 +310,10 @@ def build_libpng():
 		prefix = os.getcwd() + '/' + libpng_dir + '/out';
 		env = os.environ.copy()
 		env['CPPFLAGS'] = '-L../../' + target + '/zlib/lib -I../../' + target + '/zlib/include'
+		env['CFLAGS'] = '-L../../' + target + '/zlib/lib -I../../' + target + '/zlib/include'
+		if target == 'macos':
+			env['CPPFLAGS'] = env['CPPFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
+			env['CFLAGS'] = env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
 		env['LDFLAGS'] = '-L../../' + target + '/zlib/lib'
 		run_command(['./configure',
 			'--prefix=' + prefix,
