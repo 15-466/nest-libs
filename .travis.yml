@@ -1,3 +1,11 @@
+matrix:
+  include:
+   - os: windows
+   - os: osx
+     osx_image: xcode11
+   - os: linux
+
 install: skip
-script: ./rebuild-libs.py
-deploy: skip
+script: python3 rebuild-libs.py
+deploy:
+	skip_cleanup: true
