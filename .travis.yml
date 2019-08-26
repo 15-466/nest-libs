@@ -5,7 +5,6 @@ matrix:
       osx_image: xcode11
     - os: linux
 
-language: C++
 install: skip
 script: python3 rebuild-libs.py
 #deploy:
