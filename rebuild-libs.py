@@ -17,6 +17,8 @@ import shutil
 import platform
 import re
 
+tag = "0.0.pre0" #TODO: figure out how to read back from git somehow
+
 if platform.system() == 'Linux':
 	target = 'linux'
 elif platform.system() == 'Darwin':
@@ -190,19 +192,39 @@ def build_libpng():
 	shutil.copy(libpng_dir + "/pngconf.h", target + "/libpng/include/")
 	shutil.copy(libpng_dir + "/pnglibconf.h", target + "/libpng/include/")
 
+def make_package():
+	print("Packaging...")
+	listfile = work_folder + '/listfile'
+	with open(listfile, 'w') as l:
+		l.write('nest-libs/README.md\n')
+		for (dirpath, dirnames, filenames) in os.walk(target):
+			for fn in filenames:
+				l.write('nest-libs/' + dirpath + '/' + fn + '\n')
+	if target == 'windows':
+		run_command([
+			"C:\\Program Files\\7-Zip\\7z.exe",
+			"a",
+			"nest-libs\\nest-libs-" + target + "-" + tag + ".zip",
+			"@nest-libs\\work\\listfile"
+		], cwd='..')
+		
+
 to_build = sys.argv[1:]
 
 if "all" in to_build:
 	to_build = ["SDL2", "glm", "zlib", "libpng"]
 
 if "SDL2" in to_build:
-	build_SDL2();
+	build_SDL2()
 
 if "glm" in to_build:
-	build_glm();
+	build_glm()
 
 if "zlib" in to_build:
-	build_zlib();
+	build_zlib()
 
 if "libpng" in to_build:
-	build_libpng();
+	build_libpng()
+
+if "package" in to_build:
+	make_package()
