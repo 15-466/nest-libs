@@ -13,7 +13,8 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install python3 ; fi
 
 script:
-  cmd.exe /C "python.exe rebuild-libs.py all"
+  - cmd.exe /C "python.exe -V"
+  - cmd.exe /C "python.exe rebuild-libs.py all"
   #- if [ "$TRAVIS_OS_NAME" = "windows" ]; then python rebuild-libs.py all ; fi
   #- if [ "$TRAVIS_OS_NAME" != "windows" ]; then python3 rebuild-libs.py all ; fi
 #deploy:
