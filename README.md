@@ -5,6 +5,8 @@ This repository's releases section contains pre-compiled library packages for ou
 Contents:
  - [SDL2](http://libsdl.org/)
  - [glm](https://glm.g-truc.net/)
+ - [libpng](http://www.libpng.org/pub/png/libpng.html) (static)
+ - [zlib](http://www.zlib.net/) (static, required for libpng)
 
 ## Usage:
 
@@ -25,3 +27,7 @@ The course's base-code Jamfile are set up to work properly if the `nest-libs/` d
 Libraries compiled with, and intended to be used with, Visual Studio Community 2019.
 
 Windows releases also include ftjam (`jam.exe`) and a convenient script to launch a VS2019 command prompt with jam in the path and `JAM_TOOLSET`. See [windows/tools](windows/tools).
+
+## TODO
+
+ - Create `dist/README-*.txt` files for distribution.
