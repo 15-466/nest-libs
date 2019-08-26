@@ -9,11 +9,12 @@ language: cpp
 install: skip
 
 before_install:
-  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install 7zip ; refreshenv ; fi
-  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install python3 ; refreshenv ; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install 7zip ; fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then choco install python3 ; fi
 
 script:
-  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then python rebuild-libs.py all ; fi
-  - if [ "$TRAVIS_OS_NAME" != "windows" ]; then python3 rebuild-libs.py all ; fi
+  cmd.exe /C "python.exe rebuild-libs.py all"
+  #- if [ "$TRAVIS_OS_NAME" = "windows" ]; then python rebuild-libs.py all ; fi
+  #- if [ "$TRAVIS_OS_NAME" != "windows" ]; then python3 rebuild-libs.py all ; fi
 #deploy:
 #  skip_cleanup: true
