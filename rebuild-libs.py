@@ -59,6 +59,9 @@ else:
 	libpng_filebase = "libpng-1.6.37"
 	libpng_url = "http://prdownloads.sourceforge.net/libpng/" + libpng_filebase + ".tar.gz?download"
 
+jam_file = 'ftjam-2.5.2-win32.zip'
+jam_url = 'https://sourceforge.net/projects/freetype/files/ftjam/2.5.2/' + jam_file + '/download'
+
 if not os.path.exists(work_folder):
 	print("Creating work folder '" + work_folder + "'")
 	os.mkdir(work_folder)
@@ -337,6 +340,14 @@ def build_libpng():
 		shutil.copy(libpng_dir + "/out/lib/libpng16.a", target + "/libpng/lib/")
 		os.symlink("libpng16.a", target + "/libpng/lib/libpng.a")
 		
+def fetch_jam():
+	assert(target == 'windows')
+	remove_if_exists(work_folder + "/jam.exe")
+	remove_if_exists("windows/jam/jam.exe")
+
+	fetch_file(jam_url, work_folder + "/" + jam_file)
+	unzip_file(work_folder + "/" + jam_file, work_folder)
+	shutil.copy(work_folder + "/jam.exe", "windows/jam/")
 
 def make_package():
 	print("Packaging...")
@@ -366,6 +377,8 @@ to_build = sys.argv[1:]
 
 if "all" in to_build:
 	to_build = ["SDL2", "glm", "zlib", "libpng"]
+	if target == 'windows':
+		to_build.append("jam")
 
 if "SDL2" in to_build:
 	build_SDL2()
@@ -378,6 +391,9 @@ if "zlib" in to_build:
 
 if "libpng" in to_build:
 	build_libpng()
+
+if "jam" in to_build:
+	fetch_jam()
 
 if "package" in to_build:
 	make_package()
