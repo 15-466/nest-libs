@@ -1,4 +1,4 @@
-# Nest-libs: Pre-compiled binaries for 15-466
+# Nest-libs: Pre-compiled libraries for 15-466
 
 This repository's releases section contains pre-compiled library packages for our target systems: Linux, Windows, and MacOS.
 
@@ -8,7 +8,7 @@ Contents:
  - [libpng](http://www.libpng.org/pub/png/libpng.html) (static)
  - [zlib](http://www.zlib.net/) (static, required for libpng)
 
-## Usage:
+## Usage
 
 The course's base-code Jamfile are set up to work properly if the `nest-libs/` directory has the same parent as the `15-466-f19-baseN` directory:
 
@@ -22,7 +22,7 @@ The course's base-code Jamfile are set up to work properly if the `nest-libs/` d
 		...
 ```
 
-## Windows Notes:
+## Windows Notes
 
 Libraries compiled with, and intended to be used with, Visual Studio Community 2019.
 
