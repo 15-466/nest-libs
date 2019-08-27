@@ -16,6 +16,7 @@ script:
 - if [ "$TRAVIS_OS_NAME" != "windows" ]; then python3 rebuild-libs.py all package ; fi
 
 before_deploy:
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then find '/c/Program Files (x86)/Microsoft Visual Studio/2019/' ; fi
   - cd ${TRAVIS_BUILD_DIR}
   - ls
 
