@@ -4,8 +4,11 @@ matrix:
   - os: osx
     osx_image: xcode11
   - os: linux
+
 language: cpp
+
 install: skip
+
 script:
 - if [ "$TRAVIS_OS_NAME" = "windows" ]; then cmd.exe /C travis_win.bat ; fi
 - if [ "$TRAVIS_OS_NAME" != "windows" ]; then python3 rebuild-libs.py all package ; fi
