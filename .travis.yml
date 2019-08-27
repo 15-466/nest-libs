@@ -4,6 +4,8 @@ matrix:
   - os: osx
     osx_image: xcode11
   - os: linux
+    before_install:
+    - sudo apt-get install -y libasound2-dev libgl-dev xorg-dev
 
 language: cpp
 
