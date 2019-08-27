@@ -17,7 +17,11 @@ import shutil
 import platform
 import re
 
-tag = "0.0.pre0" #TODO: figure out how to read back from git somehow
+tag = "v0.0.pre0"
+
+if 'TRAVIS_TAG' in os.env:
+	tag = os.env['TRAVIS_TAG']
+	print("Set tag from $TRAVIS_TAG to '" + tag + "'")
 
 min_osx_version='10.7'
 
@@ -379,6 +383,8 @@ if "all" in to_build:
 	to_build = ["SDL2", "glm", "zlib", "libpng"]
 	if target == 'windows':
 		to_build.append("jam")
+	if "package" in sys.argv[1:]:
+		to_build.append("package")
 
 if "SDL2" in to_build:
 	build_SDL2()

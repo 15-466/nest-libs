@@ -11,5 +11,12 @@ install: skip
 script:
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then cmd.exe /C travis_win.bat ; fi
   - if [ "$TRAVIS_OS_NAME" != "windows" ]; then python3 rebuild-libs.py all package ; fi
-#deploy:
-#  skip_cleanup: true
+
+deploy:
+  skip_cleanup: true
+  provider: releases
+  api_key: "TBD"
+  file_glob: true
+  file: nest-libs-*-${TRAVIS_TAG}.*
+  on:
+    tags: true
