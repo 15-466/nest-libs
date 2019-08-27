@@ -2,7 +2,7 @@ matrix:
   include:
   - os: windows
     before_install:
-    - choco install visualstudio2019buildtools
+    - choco install visualstudio2019buildtools ; true #<-- ignore demanded reboot
     - choco install visualstudio2019-workload-vctools
     - choco install python3
     - choco install 7zip
