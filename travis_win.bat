@@ -1,3 +1,4 @@
+@echo BEFORE choco install
 choco install visualstudio2019buildtools
 choco install visualstudio2019-workload-vctools
 choco install python3
