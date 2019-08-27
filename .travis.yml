@@ -20,5 +20,5 @@ deploy:
   file: nest-libs-*-${TRAVIS_TAG}.*
   file_glob: yes
   on:
+    tags: true
     repo: 15-466/nest-libs
-	tags: true
