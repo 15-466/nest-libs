@@ -19,8 +19,8 @@ import re
 
 tag = "v0.0.pre0"
 
-if 'TRAVIS_TAG' in os.env:
-	tag = os.env['TRAVIS_TAG']
+if 'TRAVIS_TAG' in os.environ:
+	tag = os.environ['TRAVIS_TAG']
 	print("Set tag from $TRAVIS_TAG to '" + tag + "'")
 
 min_osx_version='10.7'
