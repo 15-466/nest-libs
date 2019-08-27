@@ -15,6 +15,10 @@ script:
 - if [ "$TRAVIS_OS_NAME" = "windows" ]; then cmd.exe /C travis_win.bat ; fi
 - if [ "$TRAVIS_OS_NAME" != "windows" ]; then python3 rebuild-libs.py all package ; fi
 
+before_deploy:
+  - cd ${TRAVIS_BUILD_DIR}
+  - ls
+
 deploy:
   provider: releases
   api_key:
