@@ -18,7 +18,8 @@ deploy:
   api_key:
     secure: PSNUknZ3v+8dkEtzsa2jHl1do/VA4h8ZwhiSU5Vb0YAmv9AdRJbfAdVVjWwieZAEJrdwdjELELB8B6Zu0hW4ifbpGRZUevSSfyvJs+XmdqD/mO4F9xFfARF6I7b80kqrlIC+3Kybi9pxap0jlArqU4S8qclgq8jEb81WhA1ib5c5jOBgJKWTFul4IIw1QwLMnImdlJlT5QUhRpRf2KW2GTmZmgfHEEX6aTOitsdZOJKHl5bsnIjO0RO0H5ognmYhRO6ty8ko1mEqO307DxdG5Y746xSxOETWRODS6Wcpve9jtxQ8jRg3a0gfIIqsGyTlmC5wpG97PRVwFLiiHEfMuFpd8V9Vcg9mKAVa/1VWooJP9FvQSdnr6+1Vl6Biw0498Kee0/6qUwBVg5+0yBEbYTdc+9HZVCQmKFL+K9FhU0h+QTqnRypi2sbPf/eEb5ETkN9U5jFcp5cgEeVTr0jXVqt4+IL5Z2m3DKKbS7S+Z6WzN6uwDYqteqQkLVtgyZZ/v2ugTFAbWjY3l6cvHMrqmnmQQz0hB877HDhtONGUIN2xHlCvXWDduFUNr4CyXi/jJ3WGG4xbMeravxi43ILEKjjFrQXoi3bHUwRTR+UXM3fswK6A06QQuToEFXf3qzabPMZ9zyPyrFp9xu5jexTYd08ubTlrHCFuaENV3/PULJg=
   file: nest-libs-*-${TRAVIS_TAG}.*
-  file_glob: yes
+  file_glob: true
+  overwrite: true
   on:
     tags: true
     repo: 15-466/nest-libs
