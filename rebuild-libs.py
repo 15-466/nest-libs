@@ -371,7 +371,7 @@ def make_package():
 	else:
 		run_command([
 			'tar',
-			'cvfz',
+			'cfz',
 			'nest-libs/nest-libs-' + target + "-" + tag + ".tar.gz",
 			"--files-from", "nest-libs/work/listfile"
 		], cwd='..')
