@@ -30,4 +30,4 @@ Windows releases also include ftjam (`jam.exe`) and a convenient script to launc
 
 ## TODO
 
- - Create `dist/README-*.txt` files for distribution.
+ - libjpeg-turbo, perhaps?
