@@ -72,6 +72,12 @@ libopus_url = "https://archive.mozilla.org/pub/opus/" + libopus_filebase + ".tar
 opusfile_filebase = "opusfile-0.11"
 opusfile_url = "https://downloads.xiph.org/releases/opus/" + opusfile_filebase + ".tar.gz"
 
+libopusenc_filebase = "libopusenc-0.2.1"
+libopusenc_url = "https://archive.mozilla.org/pub/opus/" + libopusenc_filebase + ".tar.gz"
+
+opustools_filebase = "opus-tools-0.2"
+opustools_url = "https://archive.mozilla.org/pub/opus/" + opustools_filebase + ".tar.gz"
+
 jam_file = 'ftjam-2.5.2-win32.zip'
 jam_url = 'https://sourceforge.net/projects/freetype/files/ftjam/2.5.2/' + jam_file + '/download'
 
@@ -517,6 +523,72 @@ def build_libopus():
 		shutil.copy(lib_dir + "/out/lib/libopus.a", target + "/" + lib_name + "/lib/")
 		shutil.copy(lib_dir + "/COPYING", target + "/" + lib_name + "/dist/README-libopus.txt")
 
+def build_libopusenc():
+	lib_name = "libopusenc"
+	lib_dir = work_folder + "/" + libopusenc_filebase
+
+	print("Cleaning any existing " + lib_name + "...")
+	remove_if_exists(target + "/" + lib_name + "/")
+	remove_if_exists(lib_dir)
+
+	print("Fetching " + lib_name + "...")
+	if target == 'windows':
+		pass
+		#fetch_file(libpng_url, work_folder + "/" + libpng_filebase + ".zip")
+		#unzip_file(work_folder + "/" + libpng_filebase + ".zip", work_folder)
+	else:
+		fetch_file(libopusenc_url, work_folder + "/" + libopusenc_filebase + ".tar.gz")
+		run_command([ 'tar', 'xfz', libopusenc_filebase + ".tar.gz" ], cwd=work_folder)
+
+	print("Building " + lib_name + "...")
+	if target == 'windows':
+		pass
+#		#Patch makefile:
+#		with open(libpng_dir + "/scripts/makefile.vcwin32", "r") as f:
+#			with open(libpng_dir + "/scripts/makefile.vcwin32.patched", "w") as o:
+#				for line in f:
+#					line = line.replace("-I..\\zlib","-I..\\..\\windows\\zlib\\include")
+#					line = line.replace("-..\\zlib\\zlib.lib","..\\..\\windows\\zlib\\lib\\zlib.lib")
+#					o.write(line)
+#		run_command([
+#			'nmake',
+#			'-f',
+#			'scripts/makefile.vcwin32.patched'
+#		], cwd=libpng_dir)
+	else:
+		prefix = os.getcwd() + '/' + lib_dir + '/out';
+		env = os.environ.copy()
+		env['DEPS_CFLAGS'] = '-I../../' + target + '/libogg/include -I../../' + target + '/libopus/include'
+		env['DEPS_LIBS'] = '-L../../' + target + '/libogg/lib -L../../' + target + '/libopus/lib -lopus'
+		if target == 'macos':
+			env['CPPFLAGS'] = env['CPPFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
+			env['CFLAGS'] = env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
+		run_command(['./configure',
+			'--prefix=' + prefix,
+			'--disable-dependency-tracking',
+			'--enable-static',
+			'--disable-shared',
+			'--disable-doc',
+			'--disable-examples'
+			], env=env, cwd=lib_dir);
+		run_command(['make'], cwd=lib_dir)
+		run_command(['make', 'install'], cwd=lib_dir)
+	
+	print("Copying " + lib_name + " files...")
+	os.makedirs(target + "/" + lib_name + "/lib", exist_ok=True)
+	os.makedirs(target + "/" + lib_name + "/include", exist_ok=True)
+	os.makedirs(target + "/" + lib_name + "/dist", exist_ok=True)
+	if target == 'windows':
+		pass
+#		shutil.copy(libpng_dir + "/libpng.lib", target + "/libpng/lib/")
+#		shutil.copy(libpng_dir + "/png.h", target + "/libpng/include/")
+#		shutil.copy(libpng_dir + "/pngconf.h", target + "/libpng/include/")
+#		shutil.copy(libpng_dir + "/pnglibconf.h", target + "/libpng/include/")
+	else:
+		shutil.copy(lib_dir + "/out/include/opus/opusenc.h", target + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/out/lib/libopusenc.a", target + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/COPYING", target + "/" + lib_name + "/dist/README-libopusenc.txt")
+
 
 
 def build_opusfile():
@@ -588,8 +660,83 @@ def build_opusfile():
 	else:
 		shutil.copy(lib_dir + "/out/include/opus/opusfile.h", target + "/" + lib_name + "/include/")
 		shutil.copy(lib_dir + "/out/lib/libopusfile.a", target + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/out/lib/libopusurl.a", target + "/" + lib_name + "/lib/")
 		shutil.copy(lib_dir + "/out/share/doc/opusfile/COPYING", target + "/" + lib_name + "/dist/README-opusfile.txt")
-		
+
+def build_opustools():
+	lib_name = "opus-tools"
+	lib_dir = work_folder + "/" + opustools_filebase
+
+	print("Cleaning any existing " + lib_name + "...")
+	remove_if_exists(target + "/" + lib_name + "/")
+	remove_if_exists(lib_dir)
+
+	print("Fetching " + lib_name + "...")
+	if target == 'windows':
+		pass
+		#fetch_file(libpng_url, work_folder + "/" + libpng_filebase + ".zip")
+		#unzip_file(work_folder + "/" + libpng_filebase + ".zip", work_folder)
+	else:
+		fetch_file(opustools_url, work_folder + "/" + opustools_filebase + ".tar.gz")
+		run_command([ 'tar', 'xfz', opustools_filebase + ".tar.gz" ], cwd=work_folder)
+
+	print("Building " + lib_name + "...")
+	if target == 'windows':
+		pass
+#		#Patch makefile:
+#		with open(libpng_dir + "/scripts/makefile.vcwin32", "r") as f:
+#			with open(libpng_dir + "/scripts/makefile.vcwin32.patched", "w") as o:
+#				for line in f:
+#					line = line.replace("-I..\\zlib","-I..\\..\\windows\\zlib\\include")
+#					line = line.replace("-..\\zlib\\zlib.lib","..\\..\\windows\\zlib\\lib\\zlib.lib")
+#					o.write(line)
+#		run_command([
+#			'nmake',
+#			'-f',
+#			'scripts/makefile.vcwin32.patched'
+#		], cwd=libpng_dir)
+	else:
+		prefix = os.getcwd() + '/' + lib_dir + '/out';
+		env = os.environ.copy()
+		env['OGG_CFLAGS'] = '-I../../' + target + '/libogg/include'
+		env['OGG_LIBS'] = '-L../../' + target + '/libogg/lib -logg'
+		env['OPUS_CFLAGS'] = '-I../../' + target + '/libopus/include'
+		env['OPUS_LIBS'] = '-L../../' + target + '/libopus/lib -lopus -lm'
+		env['OPUSFILE_CFLAGS'] = '-I../../' + target + '/opusfile/include'
+		env['OPUSFILE_LIBS'] = '-L../../' + target + '/opusfile/lib -lopusfile' + ' ' + env['OGG_LIBS']
+		env['OPUSURL_CFLAGS'] = '-I../../' + target + '/opusfile/include'
+		env['OPUSURL_LIBS'] = '-L../../' + target + '/opusfile/lib -lopusurl -lopusfile' +  ' ' + env['OGG_LIBS']
+		env['LIBOPUSENC_CFLAGS'] = '-I../../' + target + '/libopusenc/include'
+		env['LIBOPUSENC_LIBS'] = '-L../../' + target + '/libopusenc/lib -lopusenc'
+		if target == 'macos':
+			env['CPPFLAGS'] = env['CPPFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
+			env['CFLAGS'] = env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
+		run_command(['./configure',
+			'--prefix=' + prefix,
+			'--disable-dependency-tracking',
+			'--without-flac',
+			'--enable-sse',
+		#	'--enable-static',
+		#	'--disable-shared',
+		#	'--disable-doc',
+		#	'--disable-examples'
+			], env=env, cwd=lib_dir);
+		run_command(['make'], cwd=lib_dir)
+		run_command(['make', 'install'], cwd=lib_dir)
+	
+	print("Copying " + lib_name + " files...")
+	os.makedirs(target + "/" + lib_name + "/lib", exist_ok=True)
+	os.makedirs(target + "/" + lib_name + "/include", exist_ok=True)
+	if target == 'windows':
+		pass
+#		shutil.copy(libpng_dir + "/libpng.lib", target + "/libpng/lib/")
+#		shutil.copy(libpng_dir + "/png.h", target + "/libpng/include/")
+#		shutil.copy(libpng_dir + "/pngconf.h", target + "/libpng/include/")
+#		shutil.copy(libpng_dir + "/pnglibconf.h", target + "/libpng/include/")
+	else:
+		shutil.copy(lib_dir + "/out/include/opus/opusenc.h", target + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/out/lib/libopusenc.a", target + "/" + lib_name + "/lib/")
+
 
 
 def fetch_jam():
@@ -600,7 +747,6 @@ def fetch_jam():
 	fetch_file(jam_url, work_folder + "/" + jam_file)
 	unzip_file(work_folder + "/" + jam_file, work_folder)
 	shutil.copy(work_folder + "/jam.exe", "windows/jam/")
-
 def make_package():
 	print("Packaging...")
 	listfile = work_folder + '/listfile'
@@ -628,7 +774,7 @@ def make_package():
 to_build = sys.argv[1:]
 
 if "all" in to_build:
-	to_build = ["SDL2", "glm", "zlib", "libpng", "libogg", "libopus", "opusfile"]
+	to_build = ["SDL2", "glm", "zlib", "libpng", "libogg", "libopus", "opusfile", "libopusenc", "opus-tools"]
 	if target == 'windows':
 		to_build.append("jam")
 	if "package" in sys.argv[1:]:
@@ -654,6 +800,12 @@ if "libogg" in to_build:
 
 if "opusfile" in to_build:
 	build_opusfile()
+
+if "libopusenc" in to_build:
+	build_libopusenc()
+
+if "opus-tools" in to_build:
+	build_opustools()
 
 if "jam" in to_build:
 	fetch_jam()

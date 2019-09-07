@@ -7,6 +7,11 @@ Contents:
  - [glm](https://glm.g-truc.net/)
  - [libpng](http://www.libpng.org/pub/png/libpng.html) (static)
  - [zlib](http://www.zlib.net/) (static, required for libpng)
+ - [libogg](https://xiph.org/) (static, required for opusfile)
+ - [libopus](https://opus-codec.org/) (static, required for opusfile)
+ - [opusfile](https://opus-codec.org/) (static)
+ - [libopusenc](https://opus-codec.org/) (static, required for opus-tools)
+ - [opus-tools](https://opus-codec.org/) -- just to have a reference build
 
 ## Usage
 
