@@ -255,10 +255,11 @@ def build_glm():
 	print("Copying glm files...")
 	os.makedirs(target + "/glm/include", exist_ok=True)
 	shutil.copytree(glm_dir + "/glm/", target + "/glm/include/glm/")
+	shutil.copytree(glm_dir + "/glm/", target + "/glm/dist/")
 
 	#process the "manual.md" file to extract the license notice section:
 	with open(glm_dir + "/manual.md", 'r') as infile:
-		with open(target + "/glm/README-glm.txt", 'w') as outfile:
+		with open(target + "/glm/dist/README-glm.txt", 'w') as outfile:
 			in_licenses = False
 			for line in infile:
 				if 'name="section0"></a> Licenses' in line:
