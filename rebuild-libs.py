@@ -558,6 +558,8 @@ def build_libopusenc():
 	else:
 		prefix = os.getcwd() + '/' + lib_dir + '/out';
 		env = os.environ.copy()
+		env['CPPFLAGS'] = ''
+		env['CFLAGS'] = ''
 		env['DEPS_CFLAGS'] = '-I../../' + target + '/libogg/include -I../../' + target + '/libopus/include'
 		env['DEPS_LIBS'] = '-L../../' + target + '/libogg/lib -L../../' + target + '/libopus/lib -lopus'
 		if target == 'macos':
