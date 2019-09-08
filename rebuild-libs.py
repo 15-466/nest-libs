@@ -64,7 +64,7 @@ else:
 	libpng_url = "http://prdownloads.sourceforge.net/libpng/" + libpng_filebase + ".tar.gz?download"
 
 libogg_filebase = "libogg-1.3.4"
-libogg_url = "http://downloads.xiph.org/releases/ogg/" + libogg_filebase + ".tar.gz"
+libogg_urlbase = "http://downloads.xiph.org/releases/ogg/" + libogg_filebase
 
 libopus_filebase = "opus-1.3.1"
 libopus_url = "https://archive.mozilla.org/pub/opus/" + libopus_filebase + ".tar.gz"
@@ -112,6 +112,15 @@ def unzip_file(filename, folder):
 			filename,
 			"-d", folder
 		])
+
+def replace_in_file(filename, replacements):
+	os.rename(filename, filename + ".before")
+	with open(filename + ".before", "r") as f:
+		with open(filename, "w") as o:
+			for line in f:
+				for r in replacements:
+					line = line.replace(r[0], r[1])
+				o.write(line)
 
 def fetch_file(url, filename, checksum=None):
 	if os.path.exists(filename):
@@ -254,33 +263,29 @@ def build_glm():
 
 	print("Copying glm files...")
 	os.makedirs(target + "/glm/include", exist_ok=True)
+	os.makedirs(target + "/glm/dist", exist_ok=True)
 	shutil.copytree(glm_dir + "/glm/", target + "/glm/include/glm/")
-	shutil.copytree(glm_dir + "/glm/", target + "/glm/dist/")
 
 	#process the "manual.md" file to extract the license notice section:
-	with open(glm_dir + "/manual.md", 'r') as infile:
-		with open(target + "/glm/dist/README-glm.txt", 'w') as outfile:
+	with open(glm_dir + "/manual.md", 'rb') as infile:
+		with open(target + "/glm/dist/README-glm.txt", 'wb') as outfile:
 			in_licenses = False
 			for line in infile:
-				if 'name="section0"></a> Licenses' in line:
+				if b'name="section0"></a> Licenses' in line:
 					in_licenses = True
-					outfile.write("GLM is distributed under the following licenses:\n")
-				elif 'name="section1"' in line:
+					outfile.write(b"GLM is distributed under the following licenses:\n")
+				elif b'name="section1"' in line:
 					in_licenses = False
-				elif '<div style="page-break-after: always;"> </div>' == line.strip():
+				elif b'<div style="page-break-after: always;"> </div>' == line.strip():
 					pass
-				elif '![](./doc/manual/frontpage1.png)' == line.strip():
+				elif b'![](./doc/manual/frontpage1.png)' == line.strip():
 					pass
-				elif '![](./doc/manual/frontpage2.png)' == line.strip():
+				elif b'![](./doc/manual/frontpage2.png)' == line.strip():
 					pass
-				elif '---' == line.strip():
+				elif b'---' == line.strip():
 					pass
 				elif in_licenses:
 					outfile.write(line)
-					
-
-			
-
 
 
 def build_zlib():
@@ -342,16 +347,14 @@ def build_libpng():
 	print("Building libpng...")
 	if target == 'windows':
 		#Patch makefile:
-		with open(libpng_dir + "/scripts/makefile.vcwin32", "r") as f:
-			with open(libpng_dir + "/scripts/makefile.vcwin32.patched", "w") as o:
-				for line in f:
-					line = line.replace("-I..\\zlib","-I..\\..\\windows\\zlib\\include")
-					line = line.replace("-..\\zlib\\zlib.lib","..\\..\\windows\\zlib\\lib\\zlib.lib")
-					o.write(line)
+		replace_in_file(libpng_dir + "/scripts/makefile.vcwin32", [
+			("-I..\\zlib","-I..\\..\\windows\\zlib\\include"),
+			("-..\\zlib\\zlib.lib","..\\..\\windows\\zlib\\lib\\zlib.lib")
+		])
 		run_command([
 			'nmake',
 			'-f',
-			'scripts/makefile.vcwin32.patched'
+			'scripts/makefile.vcwin32'
 		], cwd=libpng_dir)
 	else:
 		prefix = os.getcwd() + '/' + libpng_dir + '/out';
@@ -397,33 +400,29 @@ def build_libogg():
 
 	print("Fetching " + lib_name + "...")
 	if target == 'windows':
-		pass
-		#fetch_file(libpng_url, work_folder + "/" + libpng_filebase + ".zip")
-		#unzip_file(work_folder + "/" + libpng_filebase + ".zip", work_folder)
+		fetch_file(libogg_urlbase + ".zip", work_folder + "/" + libogg_filebase + ".zip")
+		unzip_file(work_folder + "/" + libogg_filebase + ".zip", work_folder)
 	else:
-		fetch_file(libogg_url, work_folder + "/" + libogg_filebase + ".tar.gz")
+		fetch_file(libogg_urlbase + ".tar.gz", work_folder + "/" + libogg_filebase + ".tar.gz")
 		run_command([ 'tar', 'xfz', libogg_filebase + ".tar.gz" ], cwd=work_folder)
 
 	print("Building " + lib_name + "...")
 	if target == 'windows':
-		pass
-#		#Patch makefile:
-#		with open(libpng_dir + "/scripts/makefile.vcwin32", "r") as f:
-#			with open(libpng_dir + "/scripts/makefile.vcwin32.patched", "w") as o:
-#				for line in f:
-#					line = line.replace("-I..\\zlib","-I..\\..\\windows\\zlib\\include")
-#					line = line.replace("-..\\zlib\\zlib.lib","..\\..\\windows\\zlib\\lib\\zlib.lib")
-#					o.write(line)
-#		run_command([
-#			'nmake',
-#			'-f',
-#			'scripts/makefile.vcwin32.patched'
-#		], cwd=libpng_dir)
+		#patch vcxproj to remove "WindowsTargetPlatformVersion" key:
+		replace_in_file(lib_dir + "/win32/VS2015/libogg.vcxproj", [
+			('<WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>','')
+		])
+		run_command([
+			"msbuild",
+			"libogg.sln",
+			"/p:PlatformToolset=v142,Configuration=Release,Platform=x64",
+			"/t:libogg"
+		], cwd=lib_dir + "/win32/VS2015")
 	else:
 		prefix = os.getcwd() + '/' + lib_dir + '/out';
 		env = os.environ.copy()
-		#env['CPPFLAGS'] = '-L../../' + target + '/zlib/lib -I../../' + target + '/zlib/include'
-		#env['CFLAGS'] = '-L../../' + target + '/zlib/lib -I../../' + target + '/zlib/include'
+		env['CPPFLAGS'] = ''
+		env['CFLAGS'] = ''
 		if target == 'macos':
 			env['CPPFLAGS'] = env['CPPFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
 			env['CFLAGS'] = env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
@@ -441,17 +440,15 @@ def build_libogg():
 	os.makedirs(target + "/" + lib_name + "/include/ogg", exist_ok=True)
 	os.makedirs(target + "/" + lib_name + "/dist", exist_ok=True)
 	if target == 'windows':
-		pass
-#		shutil.copy(libpng_dir + "/libpng.lib", target + "/libpng/lib/")
-#		shutil.copy(libpng_dir + "/png.h", target + "/libpng/include/")
-#		shutil.copy(libpng_dir + "/pngconf.h", target + "/libpng/include/")
-#		shutil.copy(libpng_dir + "/pnglibconf.h", target + "/libpng/include/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/libogg.lib", target + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/include/ogg/ogg.h", target + "/" + lib_name + "/include/ogg/")
+		shutil.copy(lib_dir + "/include/ogg/os_types.h", target + "/" + lib_name + "/include/ogg/")
 	else:
 		shutil.copy(lib_dir + "/out/include/ogg/config_types.h", target + "/" + lib_name + "/include/ogg/")
 		shutil.copy(lib_dir + "/out/include/ogg/ogg.h", target + "/" + lib_name + "/include/ogg/")
 		shutil.copy(lib_dir + "/out/include/ogg/os_types.h", target + "/" + lib_name + "/include/ogg/")
 		shutil.copy(lib_dir + "/out/lib/libogg.a", target + "/" + lib_name + "/lib/")
-		shutil.copy(lib_dir + "/COPYING", target + "/" + lib_name + "/dist/README-libogg.txt")
+	shutil.copy(lib_dir + "/COPYING", target + "/" + lib_name + "/dist/README-libogg.txt")
 
 def build_libopus():
 	lib_name = "libopus"
@@ -463,37 +460,34 @@ def build_libopus():
 
 	print("Fetching " + lib_name + "...")
 	if target == 'windows':
-		pass
-		#fetch_file(libpng_url, work_folder + "/" + libpng_filebase + ".zip")
-		#unzip_file(work_folder + "/" + libpng_filebase + ".zip", work_folder)
+		fetch_file(libopus_url, work_folder + "/" + libopus_filebase + ".tar.gz")
+		remove_if_exists(work_folder + "/" + libopus_filebase + ".tar")
+		unzip_file(work_folder + "/" + libopus_filebase + ".tar.gz", work_folder)
+		unzip_file(work_folder + "/" + libopus_filebase + ".tar", work_folder)
 	else:
 		fetch_file(libopus_url, work_folder + "/" + libopus_filebase + ".tar.gz")
 		run_command([ 'tar', 'xfz', libopus_filebase + ".tar.gz" ], cwd=work_folder)
 
 	print("Building " + lib_name + "...")
 	if target == 'windows':
-		pass
-#		#Patch makefile:
-#		with open(libpng_dir + "/scripts/makefile.vcwin32", "r") as f:
-#			with open(libpng_dir + "/scripts/makefile.vcwin32.patched", "w") as o:
-#				for line in f:
-#					line = line.replace("-I..\\zlib","-I..\\..\\windows\\zlib\\include")
-#					line = line.replace("-..\\zlib\\zlib.lib","..\\..\\windows\\zlib\\lib\\zlib.lib")
-#					o.write(line)
-#		run_command([
-#			'nmake',
-#			'-f',
-#			'scripts/makefile.vcwin32.patched'
-#		], cwd=libpng_dir)
+		#patch vcxproj to remove "WindowsTargetPlatformVersion" key:
+		replace_in_file(lib_dir + "/win32/VS2015/opus.vcxproj", [
+			('<WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>','')
+		])
+		run_command([
+			"msbuild",
+			"opus.sln",
+			"/p:PlatformToolset=v142,Configuration=Release,Platform=x64",
+			"/t:opus"
+		], cwd=lib_dir + "/win32/VS2015")
 	else:
 		prefix = os.getcwd() + '/' + lib_dir + '/out';
 		env = os.environ.copy()
-		#env['CPPFLAGS'] = '-L../../' + target + '/zlib/lib -I../../' + target + '/zlib/include'
-		#env['CFLAGS'] = '-L../../' + target + '/zlib/lib -I../../' + target + '/zlib/include'
+		env['CPPFLAGS'] = ''
+		env['CFLAGS'] = ''
 		if target == 'macos':
 			env['CPPFLAGS'] = env['CPPFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
 			env['CFLAGS'] = env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
-		#env['LDFLAGS'] = '-L../../' + target + '/zlib/lib'
 		run_command(['./configure',
 			'--prefix=' + prefix,
 			'--disable-dependency-tracking',
@@ -510,11 +504,12 @@ def build_libopus():
 	os.makedirs(target + "/" + lib_name + "/include", exist_ok=True)
 	os.makedirs(target + "/" + lib_name + "/dist", exist_ok=True)
 	if target == 'windows':
-		pass
-#		shutil.copy(libpng_dir + "/libpng.lib", target + "/libpng/lib/")
-#		shutil.copy(libpng_dir + "/png.h", target + "/libpng/include/")
-#		shutil.copy(libpng_dir + "/pngconf.h", target + "/libpng/include/")
-#		shutil.copy(libpng_dir + "/pnglibconf.h", target + "/libpng/include/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/opus.lib", target + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/include/opus.h", target + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/include/opus_multistream.h", target + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/include/opus_types.h", target + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/include/opus_defines.h", target + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/include/opus_projection.h", target + "/" + lib_name + "/include/")
 	else:
 		shutil.copy(lib_dir + "/out/include/opus/opus.h", target + "/" + lib_name + "/include/")
 		shutil.copy(lib_dir + "/out/include/opus/opus_multistream.h", target + "/" + lib_name + "/include/")
@@ -522,7 +517,7 @@ def build_libopus():
 		shutil.copy(lib_dir + "/out/include/opus/opus_defines.h", target + "/" + lib_name + "/include/")
 		shutil.copy(lib_dir + "/out/include/opus/opus_projection.h", target + "/" + lib_name + "/include/")
 		shutil.copy(lib_dir + "/out/lib/libopus.a", target + "/" + lib_name + "/lib/")
-		shutil.copy(lib_dir + "/COPYING", target + "/" + lib_name + "/dist/README-libopus.txt")
+	shutil.copy(lib_dir + "/COPYING", target + "/" + lib_name + "/dist/README-libopus.txt")
 
 def build_libopusenc():
 	lib_name = "libopusenc"
@@ -534,28 +529,33 @@ def build_libopusenc():
 
 	print("Fetching " + lib_name + "...")
 	if target == 'windows':
-		pass
-		#fetch_file(libpng_url, work_folder + "/" + libpng_filebase + ".zip")
-		#unzip_file(work_folder + "/" + libpng_filebase + ".zip", work_folder)
+		fetch_file(libopusenc_url, work_folder + "/" + libopusenc_filebase + ".tar.gz")
+		remove_if_exists(work_folder + "/" + libopusenc_filebase + ".tar")
+		unzip_file(work_folder + "/" + libopusenc_filebase + ".tar.gz", work_folder)
+		unzip_file(work_folder + "/" + libopusenc_filebase + ".tar", work_folder)
 	else:
 		fetch_file(libopusenc_url, work_folder + "/" + libopusenc_filebase + ".tar.gz")
 		run_command([ 'tar', 'xfz', libopusenc_filebase + ".tar.gz" ], cwd=work_folder)
 
 	print("Building " + lib_name + "...")
 	if target == 'windows':
-		pass
-#		#Patch makefile:
-#		with open(libpng_dir + "/scripts/makefile.vcwin32", "r") as f:
-#			with open(libpng_dir + "/scripts/makefile.vcwin32.patched", "w") as o:
-#				for line in f:
-#					line = line.replace("-I..\\zlib","-I..\\..\\windows\\zlib\\include")
-#					line = line.replace("-..\\zlib\\zlib.lib","..\\..\\windows\\zlib\\lib\\zlib.lib")
-#					o.write(line)
-#		run_command([
-#			'nmake',
-#			'-f',
-#			'scripts/makefile.vcwin32.patched'
-#		], cwd=libpng_dir)
+		#patch vcxproj to adjust library paths:
+		replace_in_file(lib_dir + "/win32/VS2015/opusenc.vcxproj", [
+			("..\\..\\..\\opus\\win32\\VS2015\\$(Platform)\\$(Configuration)",
+			 "..\\..\\..\\..\\windows\\libopus\\lib")
+		])
+		#patch props to adjust include paths:
+		replace_in_file(lib_dir + "/win32/VS2015/common.props", [
+			("..\\..\\..\\opus\\include",
+			 "..\\..\\..\\..\\windows\\libopus\\include")
+		])
+
+		run_command([
+			"msbuild",
+			"opusenc.sln",
+			"/p:PlatformToolset=v142,Configuration=Release,Platform=x64",
+			"/t:opusenc"
+		], cwd=lib_dir + "/win32/VS2015")
 	else:
 		prefix = os.getcwd() + '/' + lib_dir + '/out';
 		env = os.environ.copy()
@@ -580,15 +580,12 @@ def build_libopusenc():
 	os.makedirs(target + "/" + lib_name + "/include", exist_ok=True)
 	os.makedirs(target + "/" + lib_name + "/dist", exist_ok=True)
 	if target == 'windows':
-		pass
-#		shutil.copy(libpng_dir + "/libpng.lib", target + "/libpng/lib/")
-#		shutil.copy(libpng_dir + "/png.h", target + "/libpng/include/")
-#		shutil.copy(libpng_dir + "/pngconf.h", target + "/libpng/include/")
-#		shutil.copy(libpng_dir + "/pnglibconf.h", target + "/libpng/include/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/opusenc.lib", target + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/include/opusenc.h", target + "/" + lib_name + "/include/")
 	else:
 		shutil.copy(lib_dir + "/out/include/opus/opusenc.h", target + "/" + lib_name + "/include/")
 		shutil.copy(lib_dir + "/out/lib/libopusenc.a", target + "/" + lib_name + "/lib/")
-		shutil.copy(lib_dir + "/COPYING", target + "/" + lib_name + "/dist/README-libopusenc.txt")
+	shutil.copy(lib_dir + "/COPYING", target + "/" + lib_name + "/dist/README-libopusenc.txt")
 
 
 
@@ -602,33 +599,38 @@ def build_opusfile():
 
 	print("Fetching " + lib_name + "...")
 	if target == 'windows':
-		pass
-		#fetch_file(libpng_url, work_folder + "/" + libpng_filebase + ".zip")
-		#unzip_file(work_folder + "/" + libpng_filebase + ".zip", work_folder)
+		fetch_file(opusfile_url, work_folder + "/" + opusfile_filebase + ".tar.gz")
+		remove_if_exists(work_folder + "/" + opusfile_filebase + ".tar")
+		unzip_file(work_folder + "/" + opusfile_filebase + ".tar.gz", work_folder)
+		unzip_file(work_folder + "/" + opusfile_filebase + ".tar", work_folder)
 	else:
 		fetch_file(opusfile_url, work_folder + "/" + opusfile_filebase + ".tar.gz")
 		run_command([ 'tar', 'xfz', opusfile_filebase + ".tar.gz" ], cwd=work_folder)
 
 	print("Building " + lib_name + "...")
 	if target == 'windows':
-		pass
-#		#Patch makefile:
-#		with open(libpng_dir + "/scripts/makefile.vcwin32", "r") as f:
-#			with open(libpng_dir + "/scripts/makefile.vcwin32.patched", "w") as o:
-#				for line in f:
-#					line = line.replace("-I..\\zlib","-I..\\..\\windows\\zlib\\include")
-#					line = line.replace("-..\\zlib\\zlib.lib","..\\..\\windows\\zlib\\lib\\zlib.lib")
-#					o.write(line)
-#		run_command([
-#			'nmake',
-#			'-f',
-#			'scripts/makefile.vcwin32.patched'
-#		], cwd=libpng_dir)
+		#patch vcxproj to adjust library and include paths:
+		replace_in_file(lib_dir + "/win32/VS2015/opusfile.vcxproj", [
+			("..\\..\\..\\opus\\win32\\VS2015\\$(Platform)\\$(Configuration)",
+			 "..\\..\\..\\..\\windows\\libopus\\lib"),
+			("..\\..\\..\\opus\\include",
+			 "..\\..\\..\\..\\windows\\libopus\\include"),
+			("..\\..\\..\\ogg\\win32\\VS2015\\$(Platform)\\$(Configuration)",
+			 "..\\..\\..\\..\\windows\\libogg\\lib"),
+			("..\\..\\..\\ogg\\include",
+			 "..\\..\\..\\..\\windows\\libogg\\include")
+		])
+		run_command([
+			"msbuild",
+			"opusfile.sln",
+			"/p:PlatformToolset=v142,Configuration=Release-NoHTTP,Platform=x64",
+			"/t:opusfile"
+		], cwd=lib_dir + "/win32/VS2015")
 	else:
 		prefix = os.getcwd() + '/' + lib_dir + '/out';
 		env = os.environ.copy()
-		#env['CPPFLAGS'] = '-L../../' + target + '/zlib/lib -I../../' + target + '/zlib/include'
-		#env['CFLAGS'] = '-L../../' + target + '/zlib/lib -I../../' + target + '/zlib/include'
+		env['CPPFLAGS'] = ''
+		env['CFLAGS'] = ''
 		env['DEPS_CFLAGS'] = '-I../../' + target + '/libogg/include -I../../' + target + '/libopus/include'
 		env['DEPS_LIBS'] = '-L../../' + target + '/libogg/lib -L../../' + target + '/libopus/lib'
 		if target == 'macos':
@@ -653,16 +655,13 @@ def build_opusfile():
 	os.makedirs(target + "/" + lib_name + "/include", exist_ok=True)
 	os.makedirs(target + "/" + lib_name + "/dist", exist_ok=True)
 	if target == 'windows':
-		pass
-#		shutil.copy(libpng_dir + "/libpng.lib", target + "/libpng/lib/")
-#		shutil.copy(libpng_dir + "/png.h", target + "/libpng/include/")
-#		shutil.copy(libpng_dir + "/pngconf.h", target + "/libpng/include/")
-#		shutil.copy(libpng_dir + "/pnglibconf.h", target + "/libpng/include/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release-NoHTTP/opusfile.lib", target + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/include/opusfile.h", target + "/" + lib_name + "/include/")
 	else:
 		shutil.copy(lib_dir + "/out/include/opus/opusfile.h", target + "/" + lib_name + "/include/")
 		shutil.copy(lib_dir + "/out/lib/libopusfile.a", target + "/" + lib_name + "/lib/")
 		shutil.copy(lib_dir + "/out/lib/libopusurl.a", target + "/" + lib_name + "/lib/")
-		shutil.copy(lib_dir + "/out/share/doc/opusfile/COPYING", target + "/" + lib_name + "/dist/README-opusfile.txt")
+	shutil.copy(lib_dir + "/COPYING", target + "/" + lib_name + "/dist/README-opusfile.txt")
 
 def build_opustools():
 	lib_name = "opus-tools"
@@ -674,31 +673,60 @@ def build_opustools():
 
 	print("Fetching " + lib_name + "...")
 	if target == 'windows':
-		pass
-		#fetch_file(libpng_url, work_folder + "/" + libpng_filebase + ".zip")
-		#unzip_file(work_folder + "/" + libpng_filebase + ".zip", work_folder)
+		fetch_file(opustools_url, work_folder + "/" + opustools_filebase + ".tar.gz")
+		remove_if_exists(work_folder + "/" + opustools_filebase + ".tar")
+		unzip_file(work_folder + "/" + opustools_filebase + ".tar.gz", work_folder)
+		unzip_file(work_folder + "/" + opustools_filebase + ".tar", work_folder)
 	else:
 		fetch_file(opustools_url, work_folder + "/" + opustools_filebase + ".tar.gz")
 		run_command([ 'tar', 'xfz', opustools_filebase + ".tar.gz" ], cwd=work_folder)
 
 	print("Building " + lib_name + "...")
 	if target == 'windows':
-		pass
-#		#Patch makefile:
-#		with open(libpng_dir + "/scripts/makefile.vcwin32", "r") as f:
-#			with open(libpng_dir + "/scripts/makefile.vcwin32.patched", "w") as o:
-#				for line in f:
-#					line = line.replace("-I..\\zlib","-I..\\..\\windows\\zlib\\include")
-#					line = line.replace("-..\\zlib\\zlib.lib","..\\..\\windows\\zlib\\lib\\zlib.lib")
-#					o.write(line)
-#		run_command([
-#			'nmake',
-#			'-f',
-#			'scripts/makefile.vcwin32.patched'
-#		], cwd=libpng_dir)
+		#patch config to remove libFLAC:
+		replace_in_file(lib_dir + "/win32/config.h", [
+			('#define HAVE_LIBFLAC','//#define HAVE_LIBFLAC')
+		])
+
+		#patch vcxproj to adjust library and include paths:
+		replace_in_file(lib_dir + "/win32/VS2015/generate_version.vcxproj", [
+			('<WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>','')
+		])
+		replace_in_file(lib_dir + "/win32/VS2015/opus-tools.props", [
+			("..\\..\\..\\opus\\include",
+			 "..\\..\\..\\..\\windows\\libopus\\include"),
+			("..\\..\\..\\ogg\\include",
+			 "..\\..\\..\\..\\windows\\libogg\\include"),
+			("..\\..\\..\\libopusenc\\include",
+			 "..\\..\\..\\..\\windows\\libopusenc\\include"),
+			("..\\..\\..\\opusfile\\include",
+			 "..\\..\\..\\..\\windows\\opusfile\\include"),
+			("..\\..\\..\\opus\\win32\\VS2015\\$(Platform)\\$(Configuration)",
+			 "..\\..\\..\\..\\windows\\libopus\\lib"),
+			("..\\..\\..\\ogg\\win32\\VS2015\\$(Platform)\\$(Configuration)",
+			 "..\\..\\..\\..\\windows\\libogg\\lib"),
+			("..\\..\\..\\libopusenc\\win32\\VS2015\\$(Platform)\\$(Configuration)",
+			 "..\\..\\..\\..\\windows\\libopusenc\\lib"),
+			("..\\..\\..\\opusfile\\win32\\VS2015\\$(Platform)\\$(Configuration)",
+			 "..\\..\\..\\..\\windows\\opusfile\\lib"),
+			("libogg_static.lib", "libogg.lib"),
+			(";libeay32.lib", ""),
+			(";ssleay32.lib", ""),
+			(";ws2_32.lib", ""),
+			(";crypt32.lib", ""),
+			(";libFLAC_static.lib", "")
+		])
+		run_command([
+			"msbuild",
+			"opus-tools.sln",
+			"/p:PlatformToolset=v142,Configuration=Release,Platform=x64",
+			"/t:opusdec,opusenc,opusinfo"
+		], cwd=lib_dir + "/win32/VS2015")
 	else:
 		prefix = os.getcwd() + '/' + lib_dir + '/out';
 		env = os.environ.copy()
+		env['CPPFLAGS'] = ''
+		env['CFLAGS'] = ''
 		env['OGG_CFLAGS'] = '-I../../' + target + '/libogg/include'
 		env['OGG_LIBS'] = '-L../../' + target + '/libogg/lib -logg'
 		env['OPUS_CFLAGS'] = '-I../../' + target + '/libopus/include'
@@ -728,16 +756,13 @@ def build_opustools():
 	print("Copying " + lib_name + " files...")
 	os.makedirs(target + "/" + lib_name + "/bin", exist_ok=True)
 	if target == 'windows':
-		pass
-#		shutil.copy(libpng_dir + "/libpng.lib", target + "/libpng/lib/")
-#		shutil.copy(libpng_dir + "/png.h", target + "/libpng/include/")
-#		shutil.copy(libpng_dir + "/pngconf.h", target + "/libpng/include/")
-#		shutil.copy(libpng_dir + "/pnglibconf.h", target + "/libpng/include/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/opusenc.exe", target + "/" + lib_name + "/bin/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/opusdec.exe", target + "/" + lib_name + "/bin/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/opusinfo.exe", target + "/" + lib_name + "/bin/")
 	else:
 		shutil.copy(lib_dir + "/out/bin/opusenc", target + "/" + lib_name + "/bin/")
 		shutil.copy(lib_dir + "/out/bin/opusdec", target + "/" + lib_name + "/bin/")
 		shutil.copy(lib_dir + "/out/bin/opusinfo", target + "/" + lib_name + "/bin/")
-
 
 
 def fetch_jam():
@@ -748,6 +773,7 @@ def fetch_jam():
 	fetch_file(jam_url, work_folder + "/" + jam_file)
 	unzip_file(work_folder + "/" + jam_file, work_folder)
 	shutil.copy(work_folder + "/jam.exe", "windows/jam/")
+
 def make_package():
 	print("Packaging...")
 	listfile = work_folder + '/listfile'
