@@ -726,8 +726,7 @@ def build_opustools():
 		run_command(['make', 'install'], cwd=lib_dir)
 	
 	print("Copying " + lib_name + " files...")
-	os.makedirs(target + "/" + lib_name + "/lib", exist_ok=True)
-	os.makedirs(target + "/" + lib_name + "/include", exist_ok=True)
+	os.makedirs(target + "/" + lib_name + "/bin", exist_ok=True)
 	if target == 'windows':
 		pass
 #		shutil.copy(libpng_dir + "/libpng.lib", target + "/libpng/lib/")
@@ -735,8 +734,9 @@ def build_opustools():
 #		shutil.copy(libpng_dir + "/pngconf.h", target + "/libpng/include/")
 #		shutil.copy(libpng_dir + "/pnglibconf.h", target + "/libpng/include/")
 	else:
-		shutil.copy(lib_dir + "/out/include/opus/opusenc.h", target + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/out/lib/libopusenc.a", target + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/out/bin/opusenc", target + "/" + lib_name + "/bin/")
+		shutil.copy(lib_dir + "/out/bin/opusdec", target + "/" + lib_name + "/bin/")
+		shutil.copy(lib_dir + "/out/bin/opusinfo", target + "/" + lib_name + "/bin/")
 
 
 
