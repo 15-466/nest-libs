@@ -381,14 +381,13 @@ def build_libpng():
 		shutil.copy(libpng_dir + "/png.h", target + "/libpng/include/")
 		shutil.copy(libpng_dir + "/pngconf.h", target + "/libpng/include/")
 		shutil.copy(libpng_dir + "/pnglibconf.h", target + "/libpng/include/")
-		shutil.copy(libpng_dir + "/LICENSE", target + "/libpng/README-libpng.txt")
 	else:
 		shutil.copy(libpng_dir + "/out/include/libpng16/png.h", target + "/libpng/include/")
 		shutil.copy(libpng_dir + "/out/include/libpng16/pngconf.h", target + "/libpng/include/")
 		shutil.copy(libpng_dir + "/out/include/libpng16/pnglibconf.h", target + "/libpng/include/")
 		shutil.copy(libpng_dir + "/out/lib/libpng16.a", target + "/libpng/lib/")
 		os.symlink("libpng16.a", target + "/libpng/lib/libpng.a")
-		shutil.copy(libpng_dir + "/LICENSE", target + "/libpng/dist/README-libpng.txt")
+	shutil.copy(libpng_dir + "/LICENSE", target + "/libpng/dist/README-libpng.txt")
 
 def build_libogg():
 	lib_name = "libogg"
