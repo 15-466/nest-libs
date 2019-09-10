@@ -446,6 +446,10 @@ def build_libogg():
 		shutil.copy(lib_dir + "/out/include/ogg/config_types.h", target + "/" + lib_name + "/include/ogg/")
 		shutil.copy(lib_dir + "/out/include/ogg/ogg.h", target + "/" + lib_name + "/include/ogg/")
 		shutil.copy(lib_dir + "/out/include/ogg/os_types.h", target + "/" + lib_name + "/include/ogg/")
+		if target == 'macos':
+			replace_in_file(target + "/" + lib_name + "/include/ogg/os_types.h", [
+				("#  include <sys/types.h>", "#include <stdint.h>")
+			])
 		shutil.copy(lib_dir + "/out/lib/libogg.a", target + "/" + lib_name + "/lib/")
 	shutil.copy(lib_dir + "/COPYING", target + "/" + lib_name + "/dist/README-libogg.txt")
 
