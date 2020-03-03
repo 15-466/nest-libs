@@ -81,6 +81,12 @@ opustools_url = "https://archive.mozilla.org/pub/opus/" + opustools_filebase + "
 jam_file = 'ftjam-2.5.2-win32.zip'
 jam_url = 'https://sourceforge.net/projects/freetype/files/ftjam/2.5.2/' + jam_file + '/download'
 
+freetype_filebase = 'freetype-2.10.1'
+freetype_url = 'https://download.savannah.gnu.org/releases/freetype/' + freetype_filebase + '.tar.gz'
+
+harfbuzz_file = '2.6.4.zip'
+harfbuzz_url = 'https://github.com/harfbuzz/harfbuzz/archive/' + harfbuzz_file
+
 if not os.path.exists(work_folder):
 	print("Creating work folder '" + work_folder + "'")
 	os.mkdir(work_folder)
@@ -779,6 +785,69 @@ def fetch_jam():
 	unzip_file(work_folder + "/" + jam_file, work_folder)
 	shutil.copy(work_folder + "/jam.exe", "windows/jam/")
 
+
+def build_harfbuzz():
+	fetch_file(harfbuzz_url, work_folder + "/" + harfbuzz_file)
+	#...TODO...
+
+
+def build_freetype():
+	lib_name = "freetype"
+	lib_dir = work_folder + "/" + freetype_filebase
+
+	print("Cleaning any existing " + lib_name + "...")
+	remove_if_exists(target + "/" + lib_name + "/")
+	remove_if_exists(lib_dir)
+
+	print("Fetching " + lib_name + "...")
+	if target == 'windows':
+		fetch_file(freetype_url, work_folder + "/" + freetype_filebase + ".tar.gz")
+		remove_if_exists(work_folder + "/" + freetype_filebase + ".tar")
+		unzip_file(work_folder + "/" + freetype_filebase + ".tar.gz", work_folder)
+		unzip_file(work_folder + "/" + freetype_filebase + ".tar", work_folder)
+	else:
+		fetch_file(freetype_url, work_folder + "/" + freetype_filebase + ".tar.gz")
+		run_command([ 'tar', 'xfz', freetype_filebase + ".tar.gz" ], cwd=work_folder)
+	
+	print("Building " + lib_name + "...")
+	#patch config to trim a few extra modules / features:
+	replace_in_file(lib_dir + "/include/freetype/config/ftoption.h", [
+		('#define FT_CONFIG_OPTION_USE_LZW', '//#define FT_CONFIG_OPTION_USE_LZW'),
+		('#define FT_CONFIG_OPTION_USE_ZLIB', '//#define FT_CONFIG_OPTION_USE_ZLIB'),
+		('#define FT_CONFIG_OPTION_ENVIRONMENT_PROPERTIES', '//#define FT_CONFIG_OPTION_ENVIRONMENT_PROPERTIES'),
+		('#define FT_CONFIG_OPTION_MAC_FONTS', '//#define FT_CONFIG_OPTION_MAC_FONTS'),
+		('#define FT_CONFIG_OPTION_OPTION_BYTECODE_INTERPRETER', '//#define FT_CONFIG_OPTION_OPTION_BYTECODE_INTERPRETER'),
+	])
+	if target == 'windows':
+		env = os.environ.copy()
+		env['JAM_TOOLSET'] = 'VISUALC'
+		run_command([
+			"windows/jam/jam.exe",
+		], env=env, cwd=lib_dir)
+	else:
+		run_command([
+			"jam",
+		], cwd=lib_dir)
+	
+	print("Copying " + lib_name + " files...")
+	os.makedirs(target + "/freetype/lib", exist_ok=True)
+	os.makedirs(target + "/freetype/include", exist_ok=True)
+	os.makedirs(target + "/freetype/dist", exist_ok=True)
+	if target == 'windows':
+		shutil.copy(lib_dir + "/objs/freetype.lib", target + "/freetype/lib/")
+	else:
+		#TODO: check what gets build on other oses:
+		shutil.copy(lib_dir + "/objs/freetype.a", target + "/freetype/lib/")
+	shutil.copy(lib_dir + "/include/ft2build.h", target + "/freetype/include/")
+	shutil.copytree(lib_dir + "/include/freetype/", target + "/freetype/include/freetype/")
+	#This isn't quite right, since the FTL only requires acknowledgement in documentation:
+	#shutil.copy(lib_dir + "/doc/FTL.TXT", target + "/freetype/dist/")
+	f = open(target + '/freetype/dist/README-freetype.txt', 'wb')
+	f.write('Freetype used under the provisions of the FTL.\n\nPortions of this software are copyright \u00A9 2020 The FreeType Project (www.freetype.org).  All rights reserved.\n'.encode('utf8'))
+	f.close()
+
+
+
 def make_package():
 	print("Packaging...")
 	listfile = work_folder + '/listfile'
@@ -806,9 +875,9 @@ def make_package():
 to_build = sys.argv[1:]
 
 if "all" in to_build:
-	to_build = ["SDL2", "glm", "zlib", "libpng", "libogg", "libopus", "opusfile", "libopusenc", "opus-tools"]
+	to_build = ["SDL2", "glm", "zlib", "libpng", "libogg", "libopus", "opusfile", "libopusenc", "opus-tools", "freetype"]
 	if target == 'windows':
-		to_build.append("jam")
+		to_build.insert(0, "jam") #putting at start because freetype build needs it
 	if "package" in sys.argv[1:]:
 		to_build.append("package")
 
@@ -841,6 +910,12 @@ if "opus-tools" in to_build:
 
 if "jam" in to_build:
 	fetch_jam()
+
+if "freetype" in to_build:
+	build_freetype()
+
+if "harfbuzz" in to_build:
+	build_harfbuzz()
 
 if "package" in to_build:
 	make_package()
