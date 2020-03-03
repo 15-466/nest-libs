@@ -875,7 +875,7 @@ def make_package():
 to_build = sys.argv[1:]
 
 if "all" in to_build:
-	to_build = ["SDL2", "glm", "zlib", "libpng", "libogg", "libopus", "opusfile", "libopusenc", "opus-tools", "freetype"]
+	to_build = ["freetype", "SDL2", "glm", "zlib", "libpng", "libogg", "libopus", "opusfile", "libopusenc", "opus-tools"]
 	if target == 'windows':
 		to_build.insert(0, "jam") #putting at start because freetype build needs it
 	if "package" in sys.argv[1:]:
