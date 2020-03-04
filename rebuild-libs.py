@@ -877,9 +877,18 @@ to_build = sys.argv[1:]
 if "all" in to_build:
 	to_build = ["freetype", "SDL2", "glm", "zlib", "libpng", "libogg", "libopus", "opusfile", "libopusenc", "opus-tools"]
 	if target == 'windows':
-		to_build.insert(0, "jam") #putting at start because freetype build needs it
+		to_build.append("jam")
 	if "package" in sys.argv[1:]:
 		to_build.append("package")
+
+if "jam" in to_build:
+	fetch_jam()
+
+if "freetype" in to_build:
+	build_freetype()
+
+if "harfbuzz" in to_build:
+	build_harfbuzz()
 
 if "SDL2" in to_build:
 	build_SDL2()
@@ -907,15 +916,6 @@ if "libopusenc" in to_build:
 
 if "opus-tools" in to_build:
 	build_opustools()
-
-if "jam" in to_build:
-	fetch_jam()
-
-if "freetype" in to_build:
-	build_freetype()
-
-if "harfbuzz" in to_build:
-	build_harfbuzz()
 
 if "package" in to_build:
 	make_package()
