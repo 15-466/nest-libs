@@ -837,7 +837,7 @@ def build_freetype():
 		shutil.copy(lib_dir + "/objs/freetype.lib", target + "/freetype/lib/")
 	else:
 		#TODO: check what gets build on other oses:
-		shutil.copy(lib_dir + "/objs/freetype.a", target + "/freetype/lib/")
+		shutil.copy(lib_dir + "/objs/libfreetype.a", target + "/freetype/lib/")
 	shutil.copy(lib_dir + "/include/ft2build.h", target + "/freetype/include/")
 	shutil.copytree(lib_dir + "/include/freetype/", target + "/freetype/include/freetype/")
 	#This isn't quite right, since the FTL only requires acknowledgement in documentation:
