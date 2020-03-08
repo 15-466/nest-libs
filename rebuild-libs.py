@@ -20,8 +20,10 @@ import re
 tag = "v0.1.pre0"
 
 if 'GITHUB_REF' in os.environ:
-	tag = os.environ['GITHUB_REF']
-	print("Set tag from $GITHUB_REF to '" + tag + "'")
+	temp = os.environ['GITHUB_REF']
+	if temp[0:10] == "/refs/tags":
+		tag = temp[10:]
+		print("Set tag from $GITHUB_REF of '" + temp + "' to '" + tag + "'")
 
 #DEBUG -- while checking tag stuff
 exit(1)
@@ -878,7 +880,7 @@ def make_package():
 to_build = sys.argv[1:]
 
 if "all" in to_build:
-	to_build = ["freetype", "SDL2", "glm", "zlib", "libpng", "libogg", "libopus", "opusfile", "libopusenc", "opus-tools"]
+	to_build = [ ] #DEBUG, should be: "freetype", "SDL2", "glm", "zlib", "libpng", "libogg", "libopus", "opusfile", "libopusenc", "opus-tools"]
 	if target == 'windows':
 		to_build.append("jam")
 	if "package" in sys.argv[1:]:

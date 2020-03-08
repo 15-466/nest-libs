@@ -1,6 +1,5 @@
 name: Build Libraries
 on:
-  push:
   release:
     types: [created]
 
@@ -18,3 +17,13 @@ jobs:
           dir/w
           call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           python rebuild-libs.py all package
+      - name: Upload Result
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TAG_NAME: ${{ github.event.tag_name }}
+        with:
+          upload_url: ${{ github.event.upload_url }}
+          asset_path: nest-libs-windows-${{ github.event.tag_name }}.zip
+          asset_name: nest-libs-windows-${{ github.event.tag_name }}.zip
+          asset_content_type: application/zip
