@@ -11,19 +11,25 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
+      - name: Dump Context Info
+        run: |
+          echo ${{ github.event }}
+          echo ${{ github.event.release.tag_name }}
+          echo ${{ github.event.release.upload_url }}
       - name: Build Code
         shell: cmd
         run: |
           dir/w
           call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           python rebuild-libs.py all package
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
       - name: Upload Result
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ github.event.tag_name }}
         with:
           upload_url: ${{ github.event.upload_url }}
-          asset_path: nest-libs-windows-${{ github.event.tag_name }}.zip
-          asset_name: nest-libs-windows-${{ github.event.tag_name }}.zip
+          asset_path: nest-libs-windows-${{ github.event.release.tag_name }}.zip
+          asset_name: nest-libs-windows-${{ github.event.release.tag_name }}.zip
           asset_content_type: application/zip
