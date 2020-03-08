@@ -46,8 +46,8 @@ work_folder = "work"
 SDL2_filebase = "SDL2-2.0.10"
 SDL2_urlbase = "https://www.libsdl.org/release/" + SDL2_filebase
 
-glm_filebase = "glm-0.9.9.5"
-glm_urlbase = "https://github.com/g-truc/glm/releases/download/0.9.9.5/" + glm_filebase
+glm_filebase = "glm-0.9.9.7"
+glm_urlbase = "https://github.com/g-truc/glm/releases/download/0.9.9.7/" + glm_filebase
 
 zlib_filebase = "zlib-1.2.11"
 if target == 'windows':
@@ -875,7 +875,7 @@ def make_package():
 to_build = sys.argv[1:]
 
 if "all" in to_build:
-	to_build = [ "glm" ] #DEBUG, should be: "freetype", "SDL2", "glm", "zlib", "libpng", "libogg", "libopus", "opusfile", "libopusenc", "opus-tools"]
+	to_build = [ "freetype", "SDL2", "glm", "zlib", "libpng", "libogg", "libopus", "opusfile", "libopusenc", "opus-tools"]
 	if target == 'windows':
 		to_build.append("jam")
 	if "package" in sys.argv[1:]:
