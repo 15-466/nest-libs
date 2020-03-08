@@ -11,12 +11,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-#      - name: Dump Context Info
-#        shell: cmd
-#        run: |
-#          echo "${{ github.event }}"
-#          echo "${{ github.event.release.tag_name }}"
-#          echo "${{ github.event.release.upload_url }}"
       - name: Build Code
         shell: cmd
         run: |
@@ -34,3 +28,47 @@ jobs:
           asset_path: nest-libs-windows-${{ github.event.release.tag_name }}.zip
           asset_name: nest-libs-windows-${{ github.event.release.tag_name }}.zip
           asset_content_type: application/zip
+  build-linux:
+    name: Build (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Build Code
+        shell: bash
+        run: |
+          sudo apt install ftjam
+          python rebuild-libs.py all package
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+      - name: Upload Result
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: nest-libs-linux-${{ github.event.release.tag_name }}.tar.gz
+          asset_name: nest-libs-linux-${{ github.event.release.tag_name }}.tar.gz
+          asset_content_type: application/gzip
+  build-macos:
+    name: Build (Linux)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Build Code
+        shell: bash
+        run: |
+          brew install ftjam
+          python rebuild-libs.py all package
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+      - name: Upload Result
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: nest-libs-macos-${{ github.event.release.tag_name }}.tar.gz
+          asset_name: nest-libs-macos-${{ github.event.release.tag_name }}.tar.gz
+          asset_content_type: application/gzip
