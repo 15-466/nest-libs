@@ -12,10 +12,11 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
       - name: Dump Context Info
+        shell: cmd
         run: |
-          echo ${{ github.event }}
-          echo ${{ github.event.release.tag_name }}
-          echo ${{ github.event.release.upload_url }}
+          echo "${{ github.event }}"
+          echo "${{ github.event.release.tag_name }}"
+          echo "${{ github.event.release.upload_url }}"
       - name: Build Code
         shell: cmd
         run: |
