@@ -11,5 +11,6 @@ jobs:
       - name: Build Code
         shell: cmd
         run: |
-          dir/w
-          travis_win.bat
+            dir/w
+            call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+            python rebuild-libs.py all package

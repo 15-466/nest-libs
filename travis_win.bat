@@ -1,6 +1,0 @@
-@echo Calling vcvars64.bat...
-dir /w "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\"
-call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-@echo Running python...
-C:\Python37\python rebuild-libs.py all package
-@echo Done.
