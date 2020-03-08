@@ -19,14 +19,9 @@ import re
 
 tag = "v0.1.pre0"
 
-if 'GITHUB_REF' in os.environ:
-	temp = os.environ['GITHUB_REF']
-	if temp[0:10] == "/refs/tags":
-		tag = temp[10:]
-		print("Set tag from $GITHUB_REF of '" + temp + "' to '" + tag + "'")
-
-#DEBUG -- while checking tag stuff
-exit(1)
+if 'TAG_NAME' in os.environ:
+	tag = os.environ['TAG_NAME']
+	print("Set tag from $TAG_NAME to '" + tag + "'")
 
 min_osx_version='10.7'
 

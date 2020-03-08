@@ -21,7 +21,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TAG_NAME: ${{ github.event.tag_name }}
+          TAG_NAME: ${{ github.event.tag_name }}
         with:
           upload_url: ${{ github.event.upload_url }}
           asset_path: nest-libs-windows-${{ github.event.tag_name }}.zip
