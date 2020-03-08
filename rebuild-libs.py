@@ -19,9 +19,12 @@ import re
 
 tag = "v0.1.pre0"
 
-if 'TRAVIS_TAG' in os.environ:
-	tag = os.environ['TRAVIS_TAG']
-	print("Set tag from $TRAVIS_TAG to '" + tag + "'")
+if 'GITHUB_REF' in os.environ:
+	tag = os.environ['GITHUB_REF']
+	print("Set tag from $GITHUB_REF to '" + tag + "'")
+
+#DEBUG -- while checking tag stuff
+exit(1)
 
 min_osx_version='10.7'
 
