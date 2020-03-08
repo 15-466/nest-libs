@@ -9,6 +9,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
       - name: Build Code
+        shell: cmd
         run: |
           dir/w
           travis_win.bat
