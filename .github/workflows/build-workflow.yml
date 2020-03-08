@@ -38,7 +38,7 @@ jobs:
         shell: bash
         run: |
           sudo apt install ftjam
-          python rebuild-libs.py all package
+          python3 rebuild-libs.py all package
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
       - name: Upload Result
@@ -51,7 +51,7 @@ jobs:
           asset_name: nest-libs-linux-${{ github.event.release.tag_name }}.tar.gz
           asset_content_type: application/gzip
   build-macos:
-    name: Build (Linux)
+    name: Build (MacOS)
     runs-on: macos-latest
     steps:
       - name: Checkout Code
@@ -60,7 +60,7 @@ jobs:
         shell: bash
         run: |
           brew install ftjam
-          python rebuild-libs.py all package
+          python3 rebuild-libs.py all package
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
       - name: Upload Result
