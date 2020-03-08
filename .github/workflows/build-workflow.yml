@@ -1,0 +1,14 @@
+name: Build Libraries
+on: push
+
+jobs:
+  build-windows:
+    name: Build (Windows)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Build Code
+        run: |
+          dir/w
+          travis_win.bat
