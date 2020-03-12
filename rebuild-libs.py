@@ -738,6 +738,7 @@ def build_opustools():
 		env = os.environ.copy()
 		env['CPPFLAGS'] = ''
 		env['CFLAGS'] = ''
+		env['LIBS'] = ''
 		env['OGG_CFLAGS'] = '-I../../' + target + '/libogg/include'
 		env['OGG_LIBS'] = '-L../../' + target + '/libogg/lib -logg'
 		env['OPUS_CFLAGS'] = '-I../../' + target + '/libopus/include'
@@ -748,14 +749,32 @@ def build_opustools():
 		env['OPUSURL_LIBS'] = '-L../../' + target + '/opusfile/lib -lopusurl -lopusfile' +  ' ' + env['OGG_LIBS']
 		env['LIBOPUSENC_CFLAGS'] = '-I../../' + target + '/libopusenc/include'
 		env['LIBOPUSENC_LIBS'] = '-L../../' + target + '/libopusenc/lib -lopusenc'
+		env['HAVE_PKG_CONFIG'] = 'no'
 		if target == 'macos':
+			#seems like CFLAGS overrides individual library flags. Or something. Very weird package behavior on osx.
 			env['CPPFLAGS'] = env['CPPFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
-			env['CFLAGS'] = env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
+			env['CFLAGS'] = (env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
+				+ ' ' + env['OGG_CFLAGS']
+				+ ' ' + env['OPUS_CFLAGS']
+				+ ' ' + env['OPUSFILE_CFLAGS']
+				+ ' ' + env['OPUSURL_CFLAGS']
+				+ ' ' + env['LIBOPUSENC_CFLAGS'] )
+			env['LIBS'] = (env['LIBS']  + ' ' + env['OGG_LIBS'] #work-around CFLAGS mis-use in config?
+				+ ' ' + env['OGG_LIBS']
+				+ ' ' + env['OPUS_LIBS']
+				+ ' ' + env['OPUSFILE_LIBS']
+				+ ' ' + env['OPUSURL_LIBS']
+				+ ' ' + env['LIBOPUSENC_LIBS'] )
+
 		run_command(['./configure',
 			'--prefix=' + prefix,
 			'--disable-dependency-tracking',
 			'--without-flac',
 			'--enable-sse',
+			'--disable-oggtest',
+			'--disable-opustest',
+			'--disable-opusfiletest',
+			'--disable-libopusenctest',
 		#	'--enable-static',
 		#	'--disable-shared',
 		#	'--disable-doc',
