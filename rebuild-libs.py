@@ -762,11 +762,11 @@ def build_opustools():
 			+ ' ' + env['OPUSURL_CFLAGS']
 			+ ' ' + env['LIBOPUSENC_CFLAGS'] )
 		env['LIBS'] = (env['LIBS']  + ' ' + env['OGG_LIBS']
+			+ ' ' + env['LIBOPUSENC_LIBS']
 			+ ' ' + env['OGG_LIBS']
 			+ ' ' + env['OPUS_LIBS']
 			+ ' ' + env['OPUSFILE_LIBS']
-			+ ' ' + env['OPUSURL_LIBS']
-			+ ' ' + env['LIBOPUSENC_LIBS'] )
+			+ ' ' + env['OPUSURL_LIBS'] )
 
 		run_command(['./configure',
 			'--prefix=' + prefix,
