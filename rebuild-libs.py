@@ -365,8 +365,8 @@ def build_libpng():
 	else:
 		prefix = os.getcwd() + '/' + libpng_dir + '/out';
 		env = os.environ.copy()
-		env['CPPFLAGS'] = '-L../../' + target + '/zlib/lib -I../../' + target + '/zlib/include'
-		env['CFLAGS'] = '-L../../' + target + '/zlib/lib -I../../' + target + '/zlib/include'
+		env['CPPFLAGS'] = '-O2 -L../../' + target + '/zlib/lib -I../../' + target + '/zlib/include'
+		env['CFLAGS'] = '-O2 -L../../' + target + '/zlib/lib -I../../' + target + '/zlib/include'
 		if target == 'macos':
 			env['CPPFLAGS'] = env['CPPFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
 			env['CFLAGS'] = env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
@@ -426,8 +426,8 @@ def build_libogg():
 	else:
 		prefix = os.getcwd() + '/' + lib_dir + '/out';
 		env = os.environ.copy()
-		env['CPPFLAGS'] = ''
-		env['CFLAGS'] = ''
+		env['CPPFLAGS'] = '-O2'
+		env['CFLAGS'] = '-O2'
 		if target == 'macos':
 			env['CPPFLAGS'] = env['CPPFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
 			env['CFLAGS'] = env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
@@ -492,8 +492,8 @@ def build_libopus():
 	else:
 		prefix = os.getcwd() + '/' + lib_dir + '/out';
 		env = os.environ.copy()
-		env['CPPFLAGS'] = ''
-		env['CFLAGS'] = ''
+		env['CPPFLAGS'] = '-O2'
+		env['CFLAGS'] = '-O2'
 		if target == 'macos':
 			env['CPPFLAGS'] = env['CPPFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
 			env['CFLAGS'] = env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
@@ -568,8 +568,8 @@ def build_libopusenc():
 	else:
 		prefix = os.getcwd() + '/' + lib_dir + '/out';
 		env = os.environ.copy()
-		env['CPPFLAGS'] = ''
-		env['CFLAGS'] = ''
+		env['CPPFLAGS'] = '-O2'
+		env['CFLAGS'] = '-O2'
 		env['DEPS_CFLAGS'] = '-I../../' + target + '/libogg/include -I../../' + target + '/libopus/include'
 		env['DEPS_LIBS'] = '-L../../' + target + '/libogg/lib -L../../' + target + '/libopus/lib -lopus'
 		if target == 'macos':
@@ -640,8 +640,8 @@ def build_opusfile():
 	else:
 		prefix = os.getcwd() + '/' + lib_dir + '/out';
 		env = os.environ.copy()
-		env['CPPFLAGS'] = ''
-		env['CFLAGS'] = ''
+		env['CPPFLAGS'] = '-O2'
+		env['CFLAGS'] = '-O2'
 		env['DEPS_CFLAGS'] = '-I../../' + target + '/libogg/include -I../../' + target + '/libopus/include'
 		env['DEPS_LIBS'] = '-L../../' + target + '/libogg/lib -L../../' + target + '/libopus/lib'
 		if target == 'macos':
@@ -736,8 +736,8 @@ def build_opustools():
 	else:
 		prefix = os.getcwd() + '/' + lib_dir + '/out';
 		env = os.environ.copy()
-		env['CPPFLAGS'] = ''
-		env['CFLAGS'] = ''
+		env['CPPFLAGS'] = '-O2'
+		env['CFLAGS'] = '-O2'
 		env['LIBS'] = ''
 		env['OGG_CFLAGS'] = '-I../../' + target + '/libogg/include'
 		env['OGG_LIBS'] = '-L../../' + target + '/libogg/lib -logg'
