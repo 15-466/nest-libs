@@ -751,20 +751,22 @@ def build_opustools():
 		env['LIBOPUSENC_LIBS'] = '-L../../' + target + '/libopusenc/lib -lopusenc'
 		env['HAVE_PKG_CONFIG'] = 'no'
 		if target == 'macos':
-			#seems like CFLAGS overrides individual library flags. Or something. Very weird package behavior on osx.
 			env['CPPFLAGS'] = env['CPPFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
-			env['CFLAGS'] = (env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
-				+ ' ' + env['OGG_CFLAGS']
-				+ ' ' + env['OPUS_CFLAGS']
-				+ ' ' + env['OPUSFILE_CFLAGS']
-				+ ' ' + env['OPUSURL_CFLAGS']
-				+ ' ' + env['LIBOPUSENC_CFLAGS'] )
-			env['LIBS'] = (env['LIBS']  + ' ' + env['OGG_LIBS'] #work-around CFLAGS mis-use in config?
-				+ ' ' + env['OGG_LIBS']
-				+ ' ' + env['OPUS_LIBS']
-				+ ' ' + env['OPUSFILE_LIBS']
-				+ ' ' + env['OPUSURL_LIBS']
-				+ ' ' + env['LIBOPUSENC_LIBS'] )
+			env['CFLAGS'] = env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
+
+		#seems like with no pkg config, the values of these variables are not respected, so they need to be added to CFLAGS/LIBS directly:
+		env['CFLAGS'] = (env['CFLAGS']
+			+ ' ' + env['OGG_CFLAGS']
+			+ ' ' + env['OPUS_CFLAGS']
+			+ ' ' + env['OPUSFILE_CFLAGS']
+			+ ' ' + env['OPUSURL_CFLAGS']
+			+ ' ' + env['LIBOPUSENC_CFLAGS'] )
+		env['LIBS'] = (env['LIBS']  + ' ' + env['OGG_LIBS']
+			+ ' ' + env['OGG_LIBS']
+			+ ' ' + env['OPUS_LIBS']
+			+ ' ' + env['OPUSFILE_LIBS']
+			+ ' ' + env['OPUSURL_LIBS']
+			+ ' ' + env['LIBOPUSENC_LIBS'] )
 
 		run_command(['./configure',
 			'--prefix=' + prefix,
