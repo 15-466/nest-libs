@@ -84,8 +84,8 @@ jam_url = 'https://sourceforge.net/projects/freetype/files/ftjam/2.5.2/' + jam_f
 freetype_filebase = 'freetype-2.10.1'
 freetype_url = 'https://download.savannah.gnu.org/releases/freetype/' + freetype_filebase + '.tar.gz'
 
-harfbuzz_file = '2.6.4.zip'
-harfbuzz_url = 'https://github.com/harfbuzz/harfbuzz/archive/' + harfbuzz_file
+harfbuzz_filebase = '2.6.4'
+harfbuzz_urlbase = 'https://github.com/harfbuzz/harfbuzz/archive/' + harfbuzz_filebase
 
 if not os.path.exists(work_folder):
 	print("Creating work folder '" + work_folder + "'")
@@ -157,7 +157,7 @@ def build_SDL2():
 	print("Building SDL2...")
 	if target == 'windows':
 		run_command([
-			"msbuild",
+			"msbuild", "/m",
 			"SDL.sln",
 			"/p:PlatformToolset=v142,Configuration=Release,Platform=x64",
 			"/t:SDL2,SDL2main"
@@ -418,7 +418,7 @@ def build_libogg():
 			('<WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>','')
 		])
 		run_command([
-			"msbuild",
+			"msbuild", "/m",
 			"libogg.sln",
 			"/p:PlatformToolset=v142,Configuration=Release,Platform=x64",
 			"/t:libogg"
@@ -484,7 +484,7 @@ def build_libopus():
 			('<WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>','')
 		])
 		run_command([
-			"msbuild",
+			"msbuild", "/m",
 			"opus.sln",
 			"/p:PlatformToolset=v142,Configuration=Release,Platform=x64",
 			"/t:opus"
@@ -560,7 +560,7 @@ def build_libopusenc():
 		])
 
 		run_command([
-			"msbuild",
+			"msbuild", "/m",
 			"opusenc.sln",
 			"/p:PlatformToolset=v142,Configuration=Release,Platform=x64",
 			"/t:opusenc"
@@ -632,7 +632,7 @@ def build_opusfile():
 			 "..\\..\\..\\..\\windows\\libogg\\include")
 		])
 		run_command([
-			"msbuild",
+			"msbuild", "/m",
 			"opusfile.sln",
 			"/p:PlatformToolset=v142,Configuration=Release-NoHTTP,Platform=x64",
 			"/t:opusfile"
@@ -728,7 +728,7 @@ def build_opustools():
 			(";libFLAC_static.lib", "")
 		])
 		run_command([
-			"msbuild",
+			"msbuild", "/m",
 			"opus-tools.sln",
 			"/p:PlatformToolset=v142,Configuration=Release,Platform=x64",
 			"/t:opusdec,opusenc,opusinfo"
@@ -808,8 +808,84 @@ def fetch_jam():
 
 
 def build_harfbuzz():
-	fetch_file(harfbuzz_url, work_folder + "/" + harfbuzz_file)
-	#...TODO...
+	lib_name = "harfbuzz"
+	lib_dir = work_folder + "/harfbuzz-" + harfbuzz_filebase
+
+	print("Cleaning any existing " + lib_name + "...")
+	remove_if_exists(target + "/" + lib_name + "/")
+	remove_if_exists(lib_dir)
+
+	print("Fetching " + lib_name + "...")
+	if target == 'windows':
+		fetch_file(harfbuzz_urlbase + ".zip", work_folder + "/" + harfbuzz_filebase + ".zip")
+		unzip_file(work_folder + "/" + harfbuzz_filebase + ".zip", work_folder)
+	else:
+		pass
+	
+	print("Building " + lib_name + "...")
+	if target == 'windows':
+		env = os.environ.copy()
+		os.makedirs(lib_dir + "/build", exist_ok=True)
+		run_command([
+			"cmake", "..",
+			"-DHB_HAVE_FREETYPE=ON",
+			"-DFREETYPE_INCLUDE_DIRS=..\\..\\" + target + "\\freetype\\include",
+			"-DFREETYPE_LIBRARY=..\\..\\..\\" + target + "\\freetype\\lib\\freetype",
+		], env=env, cwd=lib_dir + "/build")
+		run_command([
+			"msbuild", "/m",
+			"harfbuzz.sln",
+			"/t:ALL_BUILD",
+			"/p:Configuration=RelWithDebInfo"
+		],env=env, cwd=lib_dir + "/build")
+	else:
+		#TODO
+		pass
+
+	print("copying " + lib_name + " files...")
+	os.makedirs(target + "/harfbuzz/lib", exist_ok=True)
+	os.makedirs(target + "/harfbuzz/include", exist_ok=True)
+	if target == 'windows':
+		shutil.copy(lib_dir + "/build/RelWithDebInfo/harfbuzz.lib", target + "/harfbuzz/lib/")
+	else:
+		#TODO
+		#shutil.copy(lib_dir + "/objs/libfreetype.a", target + "/freetype/lib/")
+		pass
+	for header in [
+		"hb-aat-layout.h",
+		"hb-aat.h",
+		"hb-blob.h",
+		"hb-buffer.h",
+		"hb-common.h",
+		"hb-deprecated.h",
+		"hb-face.h",
+		"hb-font.h",
+		"hb-map.h",
+		"hb-ot-color.h",
+		"hb-ot-deprecated.h",
+		"hb-ot-font.h",
+		"hb-ot-layout.h",
+		"hb-ot-math.h",
+		"hb-ot-meta.h",
+		"hb-ot-metrics.h",
+		"hb-ot-name.h",
+		"hb-ot-shape.h",
+		"hb-ot-var.h",
+		"hb-ot.h",
+		"hb-set.h",
+		"hb-shape-plan.h",
+		"hb-shape.h",
+		"hb-unicode.h",
+		"hb-version.h",
+		"hb.h",
+		"hb-ft.h"
+		]:
+		shutil.copy(lib_dir + "/src/" + header, target + "/harfbuzz/include/")
+	#This isn't quite right, since the FTL only requires acknowledgement in documentation:
+	#shutil.copy(lib_dir + "/doc/FTL.TXT", target + "/freetype/dist/")
+	f = open(target + '/freetype/dist/README-freetype.txt', 'wb')
+	f.write('Freetype used under the provisions of the FTL.\n\nPortions of this software are copyright \u00A9 2020 The FreeType Project (www.freetype.org).  All rights reserved.\n'.encode('utf8'))
+	f.close()
 
 
 def build_freetype():
@@ -850,14 +926,14 @@ def build_freetype():
 			"jam",
 		], cwd=lib_dir)
 	
-	print("Copying " + lib_name + " files...")
+	print("copying " + lib_name + " files...")
 	os.makedirs(target + "/freetype/lib", exist_ok=True)
 	os.makedirs(target + "/freetype/include", exist_ok=True)
 	os.makedirs(target + "/freetype/dist", exist_ok=True)
 	if target == 'windows':
 		shutil.copy(lib_dir + "/objs/freetype.lib", target + "/freetype/lib/")
 	else:
-		#TODO: check what gets build on other oses:
+		#todo: check what gets build on other oses:
 		shutil.copy(lib_dir + "/objs/libfreetype.a", target + "/freetype/lib/")
 	shutil.copy(lib_dir + "/include/ft2build.h", target + "/freetype/include/")
 	shutil.copytree(lib_dir + "/include/freetype/", target + "/freetype/include/freetype/")
@@ -895,8 +971,10 @@ def make_package():
 
 to_build = sys.argv[1:]
 
+print("To build: " + ", ".join(to_build))
+
 if "all" in to_build:
-	to_build = [ "freetype", "SDL2", "glm", "zlib", "libpng", "libogg", "libopus", "opusfile", "libopusenc", "opus-tools"]
+	to_build = [ "harfbuzz", "freetype", "SDL2", "glm", "zlib", "libpng", "libogg", "libopus", "opusfile", "libopusenc", "opus-tools"]
 	if target == 'windows':
 		to_build.append("jam")
 	if "package" in sys.argv[1:]:
