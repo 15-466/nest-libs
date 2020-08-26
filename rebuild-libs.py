@@ -22,6 +22,9 @@ tag = "v0.1.pre0"
 if 'TAG_NAME' in os.environ:
 	tag = os.environ['TAG_NAME']
 	print("Set tag from $TAG_NAME to '" + tag + "'")
+elif 'COMMIT_SHA' in os.environ:
+	tag = os.environ['COMMIT_SHA'][0:8]
+	print("Set tag from $TAG_NAME to '" + tag + "'")
 
 min_osx_version='10.7'
 

@@ -20,6 +20,7 @@ jobs:
           python rebuild-libs.py all package
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
+          COMMIT_SHA: ${{ github.sha }}
       - name: Upload Result
         if: github.event_name == 'release'
         uses: actions/upload-release-asset@v1
@@ -30,6 +31,13 @@ jobs:
           asset_path: nest-libs-windows-${{ github.event.release.tag_name }}.zip
           asset_name: nest-libs-windows-${{ github.event.release.tag_name }}.zip
           asset_content_type: application/zip
+      - name: Upload Artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.BASE_NAME }}-windows
+          path: nest-libs-*.zip
+
   build-linux:
     name: Build (Linux)
     runs-on: ubuntu-latest
@@ -39,10 +47,12 @@ jobs:
       - name: Build Code
         shell: bash
         run: |
+          sudo apt update
           sudo apt install ftjam
           python3 rebuild-libs.py all package
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
+          COMMIT_SHA: ${{ github.sha }}
       - name: Upload Result
         if: github.event_name == 'release'
         uses: actions/upload-release-asset@v1
@@ -53,6 +63,13 @@ jobs:
           asset_path: nest-libs-linux-${{ github.event.release.tag_name }}.tar.gz
           asset_name: nest-libs-linux-${{ github.event.release.tag_name }}.tar.gz
           asset_content_type: application/gzip
+      - name: Upload Artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.BASE_NAME }}-windows
+          path: nest-libs-*.tar.gz
+
   build-macos:
     name: Build (MacOS)
     runs-on: macos-latest
@@ -66,6 +83,7 @@ jobs:
           python3 rebuild-libs.py all package
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
+          COMMIT_SHA: ${{ github.sha }}
       - name: Upload Result
         if: github.event_name == 'release'
         uses: actions/upload-release-asset@v1
@@ -76,3 +94,9 @@ jobs:
           asset_path: nest-libs-macos-${{ github.event.release.tag_name }}.tar.gz
           asset_name: nest-libs-macos-${{ github.event.release.tag_name }}.tar.gz
           asset_content_type: application/gzip
+      - name: Upload Artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.BASE_NAME }}-windows
+          path: nest-libs-*.tar.gz
