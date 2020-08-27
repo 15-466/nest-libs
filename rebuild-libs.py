@@ -835,7 +835,7 @@ def build_harfbuzz():
 			"cmake", "..",
 			"-DHB_HAVE_FREETYPE=ON",
 			"-DFREETYPE_INCLUDE_DIRS=..\\..\\" + target + "\\freetype\\include",
-			"-DFREETYPE_LIBRARIES=..\\..\\..\\" + target + "\\freetype\\lib\\freetype",
+			"-DFREETYPE_LIBRARY=..\\..\\..\\" + target + "\\freetype\\lib\\freetype",
 		], env=env, cwd=lib_dir + "/build")
 		run_command([
 			"msbuild", "/m",
