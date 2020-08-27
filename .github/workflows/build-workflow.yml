@@ -20,7 +20,6 @@ jobs:
           python rebuild-libs.py all package
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
-          COMMIT_SHA: ${{ github.sha }}
       - name: Upload Result
         if: github.event_name == 'release'
         uses: actions/upload-release-asset@v1
@@ -35,7 +34,7 @@ jobs:
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.BASE_NAME }}-windows
+          name: next-libs-windows
           path: nest-libs-*.zip
 
   build-linux:
@@ -52,7 +51,6 @@ jobs:
           python3 rebuild-libs.py all package
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
-          COMMIT_SHA: ${{ github.sha }}
       - name: Upload Result
         if: github.event_name == 'release'
         uses: actions/upload-release-asset@v1
@@ -67,7 +65,7 @@ jobs:
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.BASE_NAME }}-windows
+          name: next-libs-linux
           path: nest-libs-*.tar.gz
 
   build-macos:
@@ -83,7 +81,6 @@ jobs:
           python3 rebuild-libs.py all package
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
-          COMMIT_SHA: ${{ github.sha }}
       - name: Upload Result
         if: github.event_name == 'release'
         uses: actions/upload-release-asset@v1
@@ -98,5 +95,5 @@ jobs:
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.BASE_NAME }}-windows
+          name: next-libs-osx
           path: nest-libs-*.tar.gz

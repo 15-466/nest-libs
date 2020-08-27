@@ -17,13 +17,13 @@ import shutil
 import platform
 import re
 
-tag = "v0.1.pre0"
+tag = "vUNKNOWN"
 
 if 'TAG_NAME' in os.environ:
 	tag = os.environ['TAG_NAME']
 	print("Set tag from $TAG_NAME to '" + tag + "'")
-elif 'COMMIT_SHA' in os.environ:
-	tag = os.environ['COMMIT_SHA'][0:8]
+elif 'GITHUB_SHA' in os.environ:
+	tag = os.environ['GITHUB_SHA'][0:8]
 	print("Set tag from $TAG_NAME to '" + tag + "'")
 
 min_osx_version='10.7'
@@ -895,11 +895,7 @@ def build_harfbuzz():
 		"hb-ft.h"
 		]:
 		shutil.copy(lib_dir + "/src/" + header, target + "/harfbuzz/include/")
-	#This isn't quite right, since the FTL only requires acknowledgement in documentation:
-	#shutil.copy(lib_dir + "/doc/FTL.TXT", target + "/freetype/dist/")
-	f = open(target + '/freetype/dist/README-freetype.txt', 'wb')
-	f.write('Freetype used under the provisions of the FTL.\n\nPortions of this software are copyright \u00A9 2020 The FreeType Project (www.freetype.org).  All rights reserved.\n'.encode('utf8'))
-	f.close()
+	shutil.copy(lib_dir + "/COPYING", target + "/freetype/dist/README-harfbuzz.txt")
 
 
 def build_freetype():
@@ -961,12 +957,20 @@ def build_freetype():
 
 def make_package():
 	print("Packaging...")
+	#Create a list of files to compress for release builds:
 	listfile = work_folder + '/listfile'
 	with open(listfile, 'w') as l:
 		l.write('nest-libs/README.md\n')
 		for (dirpath, dirnames, filenames) in os.walk(target):
 			for fn in filenames:
 				l.write('nest-libs/' + dirpath + '/' + fn + '\n')
+	#Eventually might do this:
+	#Also create a package directory because of the unique way in which artifact uploads work :-/
+	#remove_if_exists(target + "/package/")
+	#os.makedirs(work_folder + "/package")
+	#shutil.copy('README.md', work_folder + "/package/")
+	#shutil.copytree(target + "/", work_folder + "/package/target/")
+	
 	if target == 'windows':
 		run_command([
 			"C:\\Program Files\\7-Zip\\7z.exe",
