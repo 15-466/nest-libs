@@ -19,7 +19,7 @@ import re
 
 tag = "vUNKNOWN"
 
-if 'TAG_NAME' in os.environ:
+if 'TAG_NAME' in os.environ and os.environ['TAG_NAME'] != '':
 	tag = os.environ['TAG_NAME']
 	print("Set tag from $TAG_NAME to '" + tag + "'")
 elif 'GITHUB_SHA' in os.environ:

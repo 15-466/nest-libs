@@ -46,6 +46,7 @@ jobs:
       - name: Build Code
         shell: bash
         run: |
+          set
           sudo apt update
           sudo apt install ftjam
           python3 rebuild-libs.py all package
