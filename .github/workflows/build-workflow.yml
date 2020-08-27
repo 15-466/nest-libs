@@ -48,7 +48,7 @@ jobs:
         run: |
           set
           sudo apt update
-          sudo apt install ftjam
+          sudo apt install ftjam libgl-dev
           python3 rebuild-libs.py all package
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
