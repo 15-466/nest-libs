@@ -835,7 +835,7 @@ def build_harfbuzz():
 			"cmake", "..",
 			"-DHB_HAVE_FREETYPE=ON",
 			"-DFREETYPE_INCLUDE_DIRS=..\\..\\" + target + "\\freetype\\include",
-			"-DFREETYPE_LIBRARY=..\\..\\..\\" + target + "\\freetype\\lib\\freetype",
+			"-DFREETYPE_LIBRARIES=..\\..\\..\\" + target + "\\freetype\\lib\\freetype",
 		], env=env, cwd=lib_dir + "/build")
 		run_command([
 			"msbuild", "/m",
@@ -851,7 +851,7 @@ def build_harfbuzz():
 			"-DCMAKE_BUILD_TYPE=RelWithDebInfo",
 			"-DHB_HAVE_FREETYPE=ON",
 			"-DFREETYPE_INCLUDE_DIRS=../../" + target + "/freetype/include",
-			"-DFREETYPE_LIBS=-L../../../" + target + "/freetype/lib/ -lfreetype",
+			"-DFREETYPE_LIBRARIES=-L../../../" + target + "/freetype/lib/ -lfreetype",
 		], env=env, cwd=lib_dir + "/build")
 		run_command([
 			"make", "-j3", "harfbuzz"
