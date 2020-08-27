@@ -34,7 +34,7 @@ jobs:
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v2
         with:
-          name: next-libs-windows
+          name: nest-libs-windows
           path: nest-libs-*.zip
 
   build-linux:
@@ -65,7 +65,7 @@ jobs:
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v2
         with:
-          name: next-libs-linux
+          name: nest-libs-linux
           path: nest-libs-*.tar.gz
 
   build-macos:
@@ -95,5 +95,5 @@ jobs:
         if: github.event_name == 'push'
         uses: actions/upload-artifact@v2
         with:
-          name: next-libs-osx
+          name: nest-libs-osx
           path: nest-libs-*.tar.gz
