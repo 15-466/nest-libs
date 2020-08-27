@@ -819,11 +819,13 @@ def build_harfbuzz():
 	remove_if_exists(lib_dir)
 
 	print("Fetching " + lib_name + "...")
-	if target == 'windows':
-		fetch_file(harfbuzz_urlbase + ".zip", work_folder + "/" + harfbuzz_filebase + ".zip")
-		unzip_file(work_folder + "/" + harfbuzz_filebase + ".zip", work_folder)
-	else:
-		pass
+	#if target == 'windows':
+	fetch_file(harfbuzz_urlbase + ".zip", work_folder + "/" + harfbuzz_filebase + ".zip")
+	unzip_file(work_folder + "/" + harfbuzz_filebase + ".zip", work_folder)
+	#else:
+	#	fetch_file(harfbuzz_urlbase + ".zip", work_folder + "/" + harfbuzz_filebase + ".zip")
+	#	unzip_file(work_folder + "/" + harfbuzz_filebase + ".zip", work_folder)
+	#	pass
 	
 	print("Building " + lib_name + "...")
 	if target == 'windows':
@@ -842,8 +844,18 @@ def build_harfbuzz():
 			"/p:Configuration=RelWithDebInfo"
 		],env=env, cwd=lib_dir + "/build")
 	else:
-		#TODO
-		pass
+		env = os.environ.copy()
+		os.makedirs(lib_dir + "/build", exist_ok=True)
+		run_command([
+			"cmake", "..",
+			"-DCMAKE_BUILD_TYPE=RelWithDebInfo",
+			"-DHB_HAVE_FREETYPE=ON",
+			"-DFREETYPE_INCLUDE_DIRS=../../" + target + "/freetype/include",
+			"-DFREETYPE_LIBS=-L../../../" + target + "/freetype/lib/ -lfreetype",
+		], env=env, cwd=lib_dir + "/build")
+		run_command([
+			"make", "-j3", "harfbuzz"
+		],env=env, cwd=lib_dir + "/build")
 
 	print("copying " + lib_name + " files...")
 	os.makedirs(target + "/harfbuzz/lib", exist_ok=True)
@@ -851,9 +863,8 @@ def build_harfbuzz():
 	if target == 'windows':
 		shutil.copy(lib_dir + "/build/RelWithDebInfo/harfbuzz.lib", target + "/harfbuzz/lib/")
 	else:
-		#TODO
-		#shutil.copy(lib_dir + "/objs/libfreetype.a", target + "/freetype/lib/")
-		pass
+		shutil.copy(lib_dir + "/build/libharfbuzz.a", target + "/harfbuzz/lib/")
+
 	for header in [
 		"hb-aat-layout.h",
 		"hb-aat.h",
