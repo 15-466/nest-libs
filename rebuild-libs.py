@@ -46,11 +46,11 @@ if target == 'macos':
 
 work_folder = "work"
 
-SDL2_filebase = "SDL2-2.0.10"
+SDL2_filebase = "SDL2-2.0.12"
 SDL2_urlbase = "https://www.libsdl.org/release/" + SDL2_filebase
 
-glm_filebase = "glm-0.9.9.7"
-glm_urlbase = "https://github.com/g-truc/glm/releases/download/0.9.9.7/" + glm_filebase
+glm_filebase = "glm-0.9.9.8"
+glm_urlbase = "https://github.com/g-truc/glm/releases/download/0.9.9.8/" + glm_filebase
 
 zlib_filebase = "zlib-1.2.11"
 if target == 'windows':
@@ -72,7 +72,7 @@ libogg_urlbase = "http://downloads.xiph.org/releases/ogg/" + libogg_filebase
 libopus_filebase = "opus-1.3.1"
 libopus_url = "https://archive.mozilla.org/pub/opus/" + libopus_filebase + ".tar.gz"
 
-opusfile_filebase = "opusfile-0.11"
+opusfile_filebase = "opusfile-0.12"
 opusfile_url = "https://downloads.xiph.org/releases/opus/" + opusfile_filebase + ".tar.gz"
 
 libopusenc_filebase = "libopusenc-0.2.1"
@@ -84,10 +84,10 @@ opustools_url = "https://archive.mozilla.org/pub/opus/" + opustools_filebase + "
 jam_file = 'ftjam-2.5.2-win32.zip'
 jam_url = 'https://sourceforge.net/projects/freetype/files/ftjam/2.5.2/' + jam_file + '/download'
 
-freetype_filebase = 'freetype-2.10.1'
+freetype_filebase = 'freetype-2.10.2'
 freetype_url = 'https://download.savannah.gnu.org/releases/freetype/' + freetype_filebase + '.tar.gz'
 
-harfbuzz_filebase = '2.6.4'
+harfbuzz_filebase = '2.7.2'
 harfbuzz_urlbase = 'https://github.com/harfbuzz/harfbuzz/archive/' + harfbuzz_filebase
 
 if not os.path.exists(work_folder):
