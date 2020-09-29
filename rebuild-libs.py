@@ -874,18 +874,30 @@ def build_harfbuzz():
 		shutil.copy(lib_dir + "/build/libharfbuzz.a", target + "/harfbuzz/lib/")
 
 	for header in [
-		"hb-aat-layout.h",
 		"hb-aat.h",
+		"hb-aat-layout.h",
 		"hb-blob.h",
 		"hb-buffer.h",
 		"hb-common.h",
+		"hb-coretext.h",
 		"hb-deprecated.h",
+		"hb-directwrite.h",
+		"hb-draw.h",
 		"hb-face.h",
 		"hb-font.h",
+		"hb-ft.h",
+		"hb-gdi.h",
+		"hb-glib.h",
+		"hb-gobject.h",
+		"hb-gobject-structs.h",
+		"hb-graphite2.h",
+		"hb.h",
+		"hb-icu.h",
 		"hb-map.h",
 		"hb-ot-color.h",
 		"hb-ot-deprecated.h",
 		"hb-ot-font.h",
+		"hb-ot.h",
 		"hb-ot-layout.h",
 		"hb-ot-math.h",
 		"hb-ot-meta.h",
@@ -893,14 +905,14 @@ def build_harfbuzz():
 		"hb-ot-name.h",
 		"hb-ot-shape.h",
 		"hb-ot-var.h",
-		"hb-ot.h",
 		"hb-set.h",
-		"hb-shape-plan.h",
 		"hb-shape.h",
+		"hb-shape-plan.h",
+		"hb-style.h",
+		"hb-subset.h",
 		"hb-unicode.h",
-		"hb-version.h",
-		"hb.h",
-		"hb-ft.h"
+		"hb-uniscribe.h",
+		"hb-version.h"
 		]:
 		shutil.copy(lib_dir + "/src/" + header, target + "/harfbuzz/include/")
 	shutil.copy(lib_dir + "/COPYING", target + "/freetype/dist/README-harfbuzz.txt")
