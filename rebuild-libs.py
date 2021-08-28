@@ -46,7 +46,7 @@ if target == 'macos':
 
 work_folder = "work"
 
-SDL2_filebase = "SDL2-2.0.12"
+SDL2_filebase = "SDL2-2.0.16"
 SDL2_urlbase = "https://www.libsdl.org/release/" + SDL2_filebase
 
 glm_filebase = "glm-0.9.9.8"
@@ -66,7 +66,7 @@ else:
 	libpng_filebase = "libpng-1.6.37"
 	libpng_url = "http://prdownloads.sourceforge.net/libpng/" + libpng_filebase + ".tar.gz?download"
 
-libogg_filebase = "libogg-1.3.4"
+libogg_filebase = "libogg-1.3.5"
 libogg_urlbase = "http://downloads.xiph.org/releases/ogg/" + libogg_filebase
 
 libopus_filebase = "opus-1.3.1"
@@ -84,10 +84,10 @@ opustools_url = "https://archive.mozilla.org/pub/opus/" + opustools_filebase + "
 jam_file = 'ftjam-2.5.2-win32.zip'
 jam_url = 'https://sourceforge.net/projects/freetype/files/ftjam/2.5.2/' + jam_file + '/download'
 
-freetype_filebase = 'freetype-2.10.2'
+freetype_filebase = 'freetype-2.11.0'
 freetype_url = 'https://download.savannah.gnu.org/releases/freetype/' + freetype_filebase + '.tar.gz'
 
-harfbuzz_filebase = '2.7.2'
+harfbuzz_filebase = '2.9.0'
 harfbuzz_urlbase = 'https://github.com/harfbuzz/harfbuzz/archive/' + harfbuzz_filebase
 
 if not os.path.exists(work_folder):
@@ -180,14 +180,10 @@ def build_SDL2():
 				'--enable-sse2',
 				'--disable-oss',
 				'--disable-alsa',
-				'--enable-alsa-shared',
 				'--disable-jack',
-				'--enable-jack-shared',
 				'--disable-esd',
 				'--disable-pulseaudio',
-				'--enable-pulseaudio-shared',
 				'--disable-arts',
-				'--enable-arts-shared',
 				'--disable-nas',
 				'--disable-diskaudio',
 				'--disable-dummyaudio',
@@ -230,7 +226,6 @@ def build_SDL2():
 				'--disable-video-dummy',
 				'--enable-video-opengl',
 				'--disable-video-opengles',
-				'--disable-input-tslib',
 				'--enable-pthreads',
 				'--enable-pthread-sem',
 				'--disable-directx',
@@ -836,12 +831,20 @@ def build_harfbuzz():
 	#	pass
 	
 	print("Building " + lib_name + "...")
+
+	#
+	replace_in_file(lib_dir + "/CMakeLists.txt", [
+		('  include (FindFreetype)', '  #include (FindFreetype)  # <-- hack to avoid picking up system freetype'),
+	])
+
+
 	if target == 'windows':
 		env = os.environ.copy()
 		os.makedirs(lib_dir + "/build", exist_ok=True)
 		run_command([
 			"cmake", "..",
 			"-DHB_HAVE_FREETYPE=ON",
+			"-DFREETYPE_FOUND=1", #<-- hack!
 			"-DFREETYPE_INCLUDE_DIRS=..\\..\\" + target + "\\freetype\\include",
 			"-DFREETYPE_LIBRARY=..\\..\\..\\" + target + "\\freetype\\lib\\freetype",
 		], env=env, cwd=lib_dir + "/build")
@@ -857,6 +860,7 @@ def build_harfbuzz():
 		run_command([
 			"cmake", "..",
 			"-DCMAKE_BUILD_TYPE=RelWithDebInfo",
+			"-DFREETYPE_FOUND=1", #<-- hack!
 			"-DHB_HAVE_FREETYPE=ON",
 			"-DFREETYPE_INCLUDE_DIRS=../../" + target + "/freetype/include",
 			"-DFREETYPE_LIBRARIES=-L../../../" + target + "/freetype/lib/ -lfreetype",
@@ -868,6 +872,7 @@ def build_harfbuzz():
 	print("copying " + lib_name + " files...")
 	os.makedirs(target + "/harfbuzz/lib", exist_ok=True)
 	os.makedirs(target + "/harfbuzz/include", exist_ok=True)
+	os.makedirs(target + "/harfbuzz/dist", exist_ok=True)
 	if target == 'windows':
 		shutil.copy(lib_dir + "/build/RelWithDebInfo/harfbuzz.lib", target + "/harfbuzz/lib/")
 	else:
@@ -915,7 +920,7 @@ def build_harfbuzz():
 		"hb-version.h"
 		]:
 		shutil.copy(lib_dir + "/src/" + header, target + "/harfbuzz/include/")
-	shutil.copy(lib_dir + "/COPYING", target + "/freetype/dist/README-harfbuzz.txt")
+	shutil.copy(lib_dir + "/COPYING", target + "/harfbuzz/dist/README-harfbuzz.txt")
 
 
 def build_freetype():
@@ -934,7 +939,7 @@ def build_freetype():
 		unzip_file(work_folder + "/" + freetype_filebase + ".tar", work_folder)
 	else:
 		fetch_file(freetype_url, work_folder + "/" + freetype_filebase + ".tar.gz")
-		run_command([ 'tar', 'xfz', freetype_filebase + ".tar.gz" ], cwd=work_folder)
+		run_command([ 'tar', 'xf', freetype_filebase + ".tar.gz" ], cwd=work_folder)
 	
 	print("Building " + lib_name + "...")
 	#patch config to trim a few extra modules / features:
@@ -943,19 +948,25 @@ def build_freetype():
 		('#define FT_CONFIG_OPTION_USE_ZLIB', '//#define FT_CONFIG_OPTION_USE_ZLIB'),
 		('#define FT_CONFIG_OPTION_ENVIRONMENT_PROPERTIES', '//#define FT_CONFIG_OPTION_ENVIRONMENT_PROPERTIES'),
 		('#define FT_CONFIG_OPTION_MAC_FONTS', '//#define FT_CONFIG_OPTION_MAC_FONTS'),
-		('#define FT_CONFIG_OPTION_OPTION_BYTECODE_INTERPRETER', '//#define FT_CONFIG_OPTION_OPTION_BYTECODE_INTERPRETER'),
+		#('#define TT_CONFIG_OPTION_BYTECODE_INTERPRETER', '//#define TT_CONFIG_OPTION_BYTECODE_INTERPRETER'), #<-- causes build error; apparently ft wasn't tested with this undefined?
 	])
-	if target == 'windows':
-		env = os.environ.copy()
-		env['JAM_TOOLSET'] = 'VISUALC'
-		run_command([
-			"windows/jam/jam.exe",
-		], env=env, cwd=lib_dir)
-	else:
-		run_command([
-			"jam",
-		], cwd=lib_dir)
-	
+	run_command([
+		"cmake",
+		"-B", "build",
+		"-D", "CMAKE_BUILD_TYPE=RelWithDebInfo",
+		"-D", "CMAKE_DISABLE_FIND_PACKAGE_ZLIB=TRUE",
+		"-D", "CMAKE_DISABLE_FIND_PACKAGE_BZip2=TRUE",
+		"-D", "CMAKE_DISABLE_FIND_PACKAGE_PNG=TRUE",
+		"-D", "CMAKE_DISABLE_FIND_PACKAGE_HarfBuzz=TRUE",
+		"-D", "CMAKE_DISABLE_FIND_PACKAGE_BrotliDec=TRUE"
+	], cwd=lib_dir)
+
+	run_command([
+		"cmake",
+		"--build", "build"
+	], cwd=lib_dir)
+
+
 	print("copying " + lib_name + " files...")
 	os.makedirs(target + "/freetype/lib", exist_ok=True)
 	os.makedirs(target + "/freetype/include", exist_ok=True)
@@ -964,9 +975,11 @@ def build_freetype():
 		shutil.copy(lib_dir + "/objs/freetype.lib", target + "/freetype/lib/")
 	else:
 		#todo: check what gets build on other oses:
-		shutil.copy(lib_dir + "/objs/libfreetype.a", target + "/freetype/lib/")
+		shutil.copy(lib_dir + "/build/libfreetype.a", target + "/freetype/lib/")
 	shutil.copy(lib_dir + "/include/ft2build.h", target + "/freetype/include/")
 	shutil.copytree(lib_dir + "/include/freetype/", target + "/freetype/include/freetype/")
+	shutil.copy(lib_dir + "/build/include/freetype/config/ftconfig.h", target + "/freetype/include/freetype/config/")
+	shutil.copy(lib_dir + "/build/include/freetype/config/ftoption.h", target + "/freetype/include/freetype/config/")
 	#This isn't quite right, since the FTL only requires acknowledgement in documentation:
 	#shutil.copy(lib_dir + "/doc/FTL.TXT", target + "/freetype/dist/")
 	f = open(target + '/freetype/dist/README-freetype.txt', 'wb')
