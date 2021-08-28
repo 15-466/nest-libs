@@ -864,6 +864,7 @@ def build_harfbuzz():
 			"-DHB_HAVE_FREETYPE=ON",
 			"-DFREETYPE_INCLUDE_DIRS=../../" + target + "/freetype/include",
 			"-DFREETYPE_LIBRARIES=-L../../../" + target + "/freetype/lib/ -lfreetype",
+            "-DCMAKE_CXX_FLAGS=-std=c++11"
 		], env=env, cwd=lib_dir + "/build")
 		run_command([
 			"make", "-j3", "harfbuzz"
@@ -972,7 +973,7 @@ def build_freetype():
 	os.makedirs(target + "/freetype/include", exist_ok=True)
 	os.makedirs(target + "/freetype/dist", exist_ok=True)
 	if target == 'windows':
-		shutil.copy(lib_dir + "/objs/freetype.lib", target + "/freetype/lib/")
+		shutil.copy(lib_dir + "/build/freetype.lib", target + "/freetype/lib/")
 	else:
 		#todo: check what gets build on other oses:
 		shutil.copy(lib_dir + "/build/libfreetype.a", target + "/freetype/lib/")
