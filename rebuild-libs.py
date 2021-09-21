@@ -452,6 +452,7 @@ def build_libogg():
 	os.makedirs(target + "/" + lib_name + "/dist", exist_ok=True)
 	if target == 'windows':
 		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/libogg.lib", target + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/libogg.pdb", target + "/" + lib_name + "/lib/")
 		shutil.copy(lib_dir + "/include/ogg/ogg.h", target + "/" + lib_name + "/include/ogg/")
 		shutil.copy(lib_dir + "/include/ogg/os_types.h", target + "/" + lib_name + "/include/ogg/")
 	else:
@@ -635,7 +636,11 @@ def build_opusfile():
 			("..\\..\\..\\ogg\\win32\\VS2015\\$(Platform)\\$(Configuration)",
 			 "..\\..\\..\\..\\windows\\libogg\\lib"),
 			("..\\..\\..\\ogg\\include",
-			 "..\\..\\..\\..\\windows\\libogg\\include")
+			 "..\\..\\..\\..\\windows\\libogg\\include"),
+			("<WholeProgramOptimization>true</WholeProgramOptimization>",
+			 "<WholeProgramOptimization>false</WholeProgramOptimization>"),
+			("<RuntimeLibrary>MultiThreaded</RuntimeLibrary>",
+			 "<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>")
 		])
 		run_command([
 			"msbuild", "/m",
@@ -673,6 +678,7 @@ def build_opusfile():
 	os.makedirs(target + "/" + lib_name + "/dist", exist_ok=True)
 	if target == 'windows':
 		shutil.copy(lib_dir + "/win32/VS2015/x64/Release-NoHTTP/opusfile.lib", target + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release-NoHTTP/opusfile.pdb", target + "/" + lib_name + "/lib/")
 		shutil.copy(lib_dir + "/include/opusfile.h", target + "/" + lib_name + "/include/")
 	else:
 		shutil.copy(lib_dir + "/out/include/opus/opusfile.h", target + "/" + lib_name + "/include/")
