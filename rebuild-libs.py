@@ -421,7 +421,10 @@ def build_libogg():
 	if target == 'windows':
 		#patch vcxproj to remove "WindowsTargetPlatformVersion" key:
 		replace_in_file(lib_dir + "/win32/VS2015/libogg.vcxproj", [
-			('<WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>','')
+			('<WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>',''),
+			(">MultiThreaded<", ">MultiThreadedDLL<"),
+			("<WholeProgramOptimization>true</WholeProgramOptimization>",
+			 "<WholeProgramOptimization>false</WholeProgramOptimization>")
 		])
 		run_command([
 			"msbuild", "/m",
@@ -489,6 +492,9 @@ def build_libopus():
 		#patch vcxproj to remove "WindowsTargetPlatformVersion" key:
 		replace_in_file(lib_dir + "/win32/VS2015/opus.vcxproj", [
 			('<WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>','')
+		])
+		replace_in_file(lib_dir + "/win32/VS2015/common.props", [
+			('>MultiThreaded<','>MultiThreadedDLL<')
 		])
 		run_command([
 			"msbuild", "/m",
@@ -741,9 +747,9 @@ def build_opustools():
 		])
 		replace_in_file(lib_dir + "/win32/VS2015/common.props", [
 			(">MultiThreaded<", ">MultiThreadedDLL<"),
+			("<WholeProgramOptimization>true</WholeProgramOptimization>",
+			 "<WholeProgramOptimization>false</WholeProgramOptimization>"),
 		])
-
-
 		run_command([
 			"msbuild", "/m",
 			"opus-tools.sln",
