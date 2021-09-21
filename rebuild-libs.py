@@ -739,6 +739,11 @@ def build_opustools():
 			(";crypt32.lib", ""),
 			(";libFLAC_static.lib", "")
 		])
+		replace_in_file(lib_dir + "/win32/VS2015/common.props", [
+			(">MultiThreaded<", ">MultiThreadedDLL<"),
+		])
+
+
 		run_command([
 			"msbuild", "/m",
 			"opus-tools.sln",
