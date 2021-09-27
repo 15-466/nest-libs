@@ -893,6 +893,7 @@ def build_harfbuzz():
 	os.makedirs(target + "/harfbuzz/dist", exist_ok=True)
 	if target == 'windows':
 		shutil.copy(lib_dir + "/build/RelWithDebInfo/harfbuzz.lib", target + "/harfbuzz/lib/")
+		shutil.copy(lib_dir + "/build/RelWithDebInfo/harfbuzz.pdb", target + "/harfbuzz/lib/")
 	else:
 		shutil.copy(lib_dir + "/build/libharfbuzz.a", target + "/harfbuzz/lib/")
 
@@ -992,6 +993,7 @@ def build_freetype():
 	os.makedirs(target + "/freetype/dist", exist_ok=True)
 	if target == 'windows':
 		shutil.copy(lib_dir + "/build/RelWithDebInfo/freetype.lib", target + "/freetype/lib/")
+		shutil.copy(lib_dir + "/build/RelWithDebInfo/freetype.pdb", target + "/freetype/lib/")
 	else:
 		#todo: check what gets build on other oses:
 		shutil.copy(lib_dir + "/build/libfreetype.a", target + "/freetype/lib/")
