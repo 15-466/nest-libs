@@ -968,6 +968,8 @@ def build_freetype():
 		('#define FT_CONFIG_OPTION_ENVIRONMENT_PROPERTIES', '//#define FT_CONFIG_OPTION_ENVIRONMENT_PROPERTIES'),
 		('#define FT_CONFIG_OPTION_MAC_FONTS', '//#define FT_CONFIG_OPTION_MAC_FONTS'),
 		#('#define TT_CONFIG_OPTION_BYTECODE_INTERPRETER', '//#define TT_CONFIG_OPTION_BYTECODE_INTERPRETER'), #<-- causes build error; apparently ft wasn't tested with this undefined?
+		#but actually enable error strings:
+		('/* #define FT_CONFIG_OPTION_ERROR_STRINGS */', '#define FT_CONFIG_OPTION_ERROR_STRINGS'),
 	])
 	run_command([
 		"cmake",
