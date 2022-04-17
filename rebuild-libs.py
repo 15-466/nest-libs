@@ -52,7 +52,7 @@ SDL2_urlbase = "https://www.libsdl.org/release/" + SDL2_filebase
 glm_filebase = "glm-0.9.9.8"
 glm_urlbase = "https://github.com/g-truc/glm/releases/download/0.9.9.8/" + glm_filebase
 
-zlib_filebase = "zlib-1.2.11"
+zlib_filebase = "zlib-1.2.12"
 if target == 'windows':
 	#for whatever reason, zipfile releases are named oddly:
 	zlib_url = "http://zlib.net/zlib" +re.sub(r'[^0-9]','', zlib_filebase) + ".zip"
