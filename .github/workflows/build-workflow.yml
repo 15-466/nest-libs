@@ -19,7 +19,8 @@ jobs:
           dir/w
           echo ProgramW6432: %ProgramW6432%
           echo %ProgramW6432%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat "amd64"
-          call "%ProgramW6432%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" "amd64"
+          dir %ProgramW6432%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\
+          call "%ProgramW6432%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat amd64"
           python rebuild-libs.py all package
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
