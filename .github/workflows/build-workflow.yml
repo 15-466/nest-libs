@@ -17,6 +17,7 @@ jobs:
         #maybe this from will work: https://github.com/cisco/ChezScheme/blob/main/c/vs.bat
         run: |
           dir/w
+          echo ProgramW6432: %ProgramW6432%
           call "%ProgramW6432%\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" "x64"
           python rebuild-libs.py all package
         env:
