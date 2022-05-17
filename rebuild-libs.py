@@ -907,7 +907,7 @@ def build_harfbuzz():
 					strip='strip'
 				""".encode('utf8'))
 			else:
-				assert(False, "invalid target " + target)
+				assert False
 			f.close()
 		env = os.environ.copy()
 		run_command([
@@ -1008,7 +1008,6 @@ def build_freetype():
 	])
 
 	env = os.environ.copy()
-	env['CC'] = 'what'
 	env['CFLAGS'] = variant_cflags[variant]
 	env['CXXFLAGS'] = variant_cflags[variant]
 	run_command([
@@ -1058,9 +1057,10 @@ def make_package():
 	listfile = work_folder + '/listfile'
 	with open(listfile, 'w') as l:
 		l.write('nest-libs/README.md\n')
-		for (dirpath, dirnames, filenames) in os.walk(target):
-			for fn in filenames:
-				l.write('nest-libs/' + dirpath + '/' + fn + '\n')
+		for variant in variants:
+			for (dirpath, dirnames, filenames) in os.walk(target + variant):
+				for fn in filenames:
+					l.write('nest-libs/' + dirpath + '/' + fn + '\n')
 	#Eventually might do this:
 	#Also create a package directory because of the unique way in which artifact uploads work :-/
 	#remove_if_exists(target + variant + "/package/")
@@ -1072,14 +1072,14 @@ def make_package():
 		run_command([
 			"C:\\Program Files\\7-Zip\\7z.exe",
 			"a",
-			"nest-libs\\nest-libs-" + target + variant + "-" + tag + ".zip",
+			"nest-libs\\nest-libs-" + target + "-" + tag + ".zip",
 			"@nest-libs\\work\\listfile"
 		], cwd='..')
 	else:
 		run_command([
 			'tar',
 			'cfz',
-			'nest-libs/nest-libs-' + target + variant + "-" + tag + ".tar.gz",
+			'nest-libs/nest-libs-' + target + "-" + tag + ".tar.gz",
 			"--files-from", "nest-libs/work/listfile"
 		], cwd='..')
 		
