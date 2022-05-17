@@ -26,18 +26,35 @@ elif 'GITHUB_SHA' in os.environ:
 	tag = os.environ['GITHUB_SHA'][0:8]
 	print("Set tag from $TAG_NAME to '" + tag + "'")
 
-min_osx_version='10.7'
+variant = ''
+variant_cflags = { '':'' }
+variant_cmake_flags = { '':'' }
+
+
+jobs = os.cpu_count() + 1
+print(f"Using {jobs} threads.");
 
 if platform.system() == 'Linux':
 	target = 'linux'
+	variants = ['']
 elif platform.system() == 'Darwin':
 	target = 'macos'
+	variant_cflags = {
+		'-x86':'-target x86_64-apple-macos10.9 -mmacosx-version-min=10.9',
+		'-arm':'-target arm64-apple-macos11 -mmacosx-version-min=11'
+	}
+	variant_cmake_flags = {
+		'-x86':['-DCMAKE_OSX_DEPLOYMENT_TARGET=10.9', '-DCMAKE_APPLE_SILICON_PROCESSOR=x86_64', '-DCMAKE_OSX_DEPLOYMENT_TARGET='],
+		'-arm':['-DCMAKE_OSX_DEPLOYMENT_TARGET=11', '-DCMAKE_APPLE_SILICON_PROCESSOR=arm64', '-DCMAKE_OSX_DEPLOYMENT_TARGET=']
+	}
+	variants = list(variant_cflags.keys())
 elif platform.system() == 'Windows':
 	target = 'windows'
+	variants = ['']
 else:
 	exit("Unknown system '" + platform.system() + "'")
 
-print("Will build for '" + target + "'")
+print("Will build for '" + target + variant + "'")
 
 if target == 'macos':
 	if os.path.exists('/usr/local/bin/ranlib'):
@@ -46,7 +63,7 @@ if target == 'macos':
 
 work_folder = "work"
 
-SDL2_filebase = "SDL2-2.0.16"
+SDL2_filebase = "SDL2-2.0.22"
 SDL2_urlbase = "https://www.libsdl.org/release/" + SDL2_filebase
 
 glm_filebase = "glm-0.9.9.8"
@@ -143,7 +160,7 @@ def build_SDL2():
 
 	print("Cleaning any existing SDL2...")
 	remove_if_exists(SDL2_dir)
-	remove_if_exists(target + "/SDL2/")
+	remove_if_exists(target + variant + "/SDL2/")
 
 	print("Fetching SDL2...")
 	if target == 'windows':
@@ -170,13 +187,15 @@ def build_SDL2():
 		env = os.environ.copy()
 		prefix = os.getcwd() + '/' + SDL2_dir + '/out'
 		if target == 'macos':
-			env['CFLAGS'] = '-mmacosx-version-min=' + min_osx_version
+			env['CFLAGS'] = variant_cflags[variant]
 			run_command(['../configure', '--prefix=' + prefix,
 				'--disable-shared', '--enable-static',
 				'--disable-render',
-				#'--disable-haptic', #force feedback framework required by joystick code anyway
-				#'--disable-file', '--disable-filesystem', #can't disable without link errors
+				'--enable-haptic', #force feedback framework required by joystick code anyway
+				'--disable-file', '--disable-filesystem',
 				'--disable-loadso', '--disable-power',
+				"--disable-sensor",
+				"--disable-hidapi",
 				'--enable-sse2',
 				'--disable-oss',
 				'--disable-alsa',
@@ -197,18 +216,17 @@ def build_SDL2():
 				'--disable-video-vulkan',
 				'--disable-video-dummy',
 				'--enable-video-opengl',
+				'--disable-video-metal',
 				'--disable-video-opengles',
-				'--disable-input-tslib',
 				'--enable-pthreads',
 				'--enable-pthread-sem',
 				'--disable-directx',
 				'--disable-render',
-				'--enable-sdl-dlopen',
 			],env=env,cwd=SDL2_dir + '/build')
 		else:
 			run_command(['../configure', '--prefix=' + prefix,
 				'--disable-shared', '--enable-static',
-				'--disable-render', '--disable-haptic', '--disable-file', '--disable-filesystem', '--disable-loadso', '--disable-power',
+				'--disable-render', '--disable-haptic', '--disable-file', '--disable-filesystem', '--disable-loadso', '--disable-power', '--disable-sensor', '--disable-hidapi',
 				'--enable-sse2',
 				'--disable-oss',
 				'--enable-alsa',
@@ -232,55 +250,55 @@ def build_SDL2():
 				'--disable-render',
 				'--enable-sdl-dlopen',
 			],env=env,cwd=SDL2_dir + '/build')
-		run_command(['make'], cwd=SDL2_dir + '/build')
+		run_command(['make', '-j', str(jobs)], cwd=SDL2_dir + '/build')
 		run_command(['make', 'install'], cwd=SDL2_dir + '/build')
 
 	print("Copying SDL2 files...")
-	os.makedirs(target + "/SDL2/lib", exist_ok=True)
-	os.makedirs(target + "/SDL2/dist", exist_ok=True)
+	os.makedirs(target + variant + "/SDL2/lib", exist_ok=True)
+	os.makedirs(target + variant + "/SDL2/dist", exist_ok=True)
 	if target == 'windows':
-		shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2.lib", target + "/SDL2/lib/")
-		shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2main.lib", target + "/SDL2/lib/")
-		shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2.dll", target + "/SDL2/dist/")
-		shutil.copytree(SDL2_dir + "/include/", target + "/SDL2/include/")
+		shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2.lib", target + variant + "/SDL2/lib/")
+		shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2main.lib", target + variant + "/SDL2/lib/")
+		shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2.dll", target + variant + "/SDL2/dist/")
+		shutil.copytree(SDL2_dir + "/include/", target + variant + "/SDL2/include/")
 	else:
-		os.makedirs(target + "/SDL2/bin", exist_ok=True)
+		os.makedirs(target + variant + "/SDL2/bin", exist_ok=True)
 		with open(SDL2_dir + '/out/bin/sdl2-config', 'r') as i:
-			with open(target + '/SDL2/bin/sdl2-config', 'w') as o:
+			with open(target + variant + '/SDL2/bin/sdl2-config', 'w') as o:
 				found_prefix = False
 				for line in i:
 					if re.match('^prefix=.*$', line) != None:
 						assert(not found_prefix)
-						o.write("prefix=../nest-libs/" + target + "/SDL2\n")
+						o.write("prefix=../nest-libs/" + target + variant + "/SDL2\n")
 						found_prefix = True
 					else:
 						o.write(line)
 				assert(found_prefix)
-		os.chmod(target + '/SDL2/bin/sdl2-config', 0o744)
-		shutil.copy(SDL2_dir + "/out/lib/libSDL2.a", target + "/SDL2/lib/")
-		shutil.copy(SDL2_dir + "/out/lib/libSDL2main.a", target + "/SDL2/lib/")
-		shutil.copytree(SDL2_dir + "/out/include/SDL2/", target + "/SDL2/include/SDL2/")
-	shutil.copy(SDL2_dir + "/README-SDL.txt", target + "/SDL2/dist/")
+		os.chmod(target + variant + '/SDL2/bin/sdl2-config', 0o744)
+		shutil.copy(SDL2_dir + "/out/lib/libSDL2.a", target + variant + "/SDL2/lib/")
+		shutil.copy(SDL2_dir + "/out/lib/libSDL2main.a", target + variant + "/SDL2/lib/")
+		shutil.copytree(SDL2_dir + "/out/include/SDL2/", target + variant + "/SDL2/include/SDL2/")
+	shutil.copy(SDL2_dir + "/README-SDL.txt", target + variant + "/SDL2/dist/")
 
 
 def build_glm():
 	glm_dir = work_folder + "/glm"
 	print("Cleaning any existing glm...")
 	remove_if_exists(glm_dir)
-	remove_if_exists(target + "/glm/")
+	remove_if_exists(target + variant + "/glm/")
 
 	print("Fetching glm...")
 	fetch_file(glm_urlbase + ".zip", work_folder + "/" + glm_filebase + ".zip")
 	unzip_file(work_folder + "/" + glm_filebase + ".zip", work_folder)
 
 	print("Copying glm files...")
-	os.makedirs(target + "/glm/include", exist_ok=True)
-	os.makedirs(target + "/glm/dist", exist_ok=True)
-	shutil.copytree(glm_dir + "/glm/", target + "/glm/include/glm/")
+	os.makedirs(target + variant + "/glm/include", exist_ok=True)
+	os.makedirs(target + variant + "/glm/dist", exist_ok=True)
+	shutil.copytree(glm_dir + "/glm/", target + variant + "/glm/include/glm/")
 
 	#process the "manual.md" file to extract the license notice section:
 	with open(glm_dir + "/manual.md", 'rb') as infile:
-		with open(target + "/glm/dist/README-glm.txt", 'wb') as outfile:
+		with open(target + variant + "/glm/dist/README-glm.txt", 'wb') as outfile:
 			in_licenses = False
 			for line in infile:
 				if b'name="section0"></a> Licenses' in line:
@@ -304,7 +322,7 @@ def build_zlib():
 	zlib_dir = work_folder + "/" + zlib_filebase
 	print("Cleaning any existing zlib...")
 	remove_if_exists(zlib_dir)
-	remove_if_exists(target + "/zlib/")
+	remove_if_exists(target + variant + "/zlib/")
 
 	print("Fetching zlib...")
 	if target == 'windows':
@@ -321,31 +339,30 @@ def build_zlib():
 	else:
 		env = os.environ.copy()
 		env['prefix'] = 'out'
-		if target == 'macos':
-			env['CFLAGS'] = '-mmacosx-version-min=' + min_osx_version
+		env['CFLAGS'] = variant_cflags[variant]
 		run_command(['./configure', '--static'], env=env, cwd=zlib_dir)
 		run_command(['make'], cwd=zlib_dir)
 		run_command(['make', 'install'], cwd=zlib_dir)
 
 	print("Copying zlib files...")
-	os.makedirs(target + "/zlib/lib", exist_ok=True)
-	os.makedirs(target + "/zlib/include", exist_ok=True)
+	os.makedirs(target + variant + "/zlib/lib", exist_ok=True)
+	os.makedirs(target + variant + "/zlib/include", exist_ok=True)
 	if target == 'windows':
-		shutil.copy(zlib_dir + "/zlib.lib", target + "/zlib/lib/")
-		shutil.copy(zlib_dir + "/zlib.pdb", target + "/zlib/lib/")
-		shutil.copy(zlib_dir + "/zconf.h", target + "/zlib/include/")
-		shutil.copy(zlib_dir + "/zlib.h", target + "/zlib/include/")
+		shutil.copy(zlib_dir + "/zlib.lib", target + variant + "/zlib/lib/")
+		shutil.copy(zlib_dir + "/zlib.pdb", target + variant + "/zlib/lib/")
+		shutil.copy(zlib_dir + "/zconf.h", target + variant + "/zlib/include/")
+		shutil.copy(zlib_dir + "/zlib.h", target + variant + "/zlib/include/")
 	else:
-		shutil.copy(zlib_dir + "/out/include/zconf.h", target + "/zlib/include/")
-		shutil.copy(zlib_dir + "/out/include/zlib.h", target + "/zlib/include/")
-		shutil.copy(zlib_dir + "/out/lib/libz.a", target + "/zlib/lib/")
+		shutil.copy(zlib_dir + "/out/include/zconf.h", target + variant + "/zlib/include/")
+		shutil.copy(zlib_dir + "/out/include/zlib.h", target + variant + "/zlib/include/")
+		shutil.copy(zlib_dir + "/out/lib/libz.a", target + variant + "/zlib/lib/")
 
 
 def build_libpng():
 	libpng_dir = work_folder + "/" + libpng_filebase
 
 	print("Cleaning any existing libpng...")
-	remove_if_exists(target + "/libpng/")
+	remove_if_exists(target + variant + "/libpng/")
 	remove_if_exists(libpng_dir)
 
 	print("Fetching libpng...")
@@ -371,42 +388,41 @@ def build_libpng():
 	else:
 		prefix = os.getcwd() + '/' + libpng_dir + '/out';
 		env = os.environ.copy()
-		env['CPPFLAGS'] = '-O2 -L../../' + target + '/zlib/lib -I../../' + target + '/zlib/include'
-		env['CFLAGS'] = '-O2 -L../../' + target + '/zlib/lib -I../../' + target + '/zlib/include'
-		if target == 'macos':
-			env['CPPFLAGS'] = env['CPPFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
-			env['CFLAGS'] = env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
-		env['LDFLAGS'] = '-L../../' + target + '/zlib/lib'
+		env['CPPFLAGS'] = '-O2 -L../../' + target + variant + '/zlib/lib -I../../' + target + variant + '/zlib/include'
+		env['CFLAGS'] = '-O2 -L../../' + target + variant + '/zlib/lib -I../../' + target + variant + '/zlib/include'
+		env['CPPFLAGS'] = env['CPPFLAGS'] + ' ' + variant_cflags[variant]
+		env['CFLAGS'] = env['CFLAGS'] + ' ' + variant_cflags[variant]
+		env['LDFLAGS'] = '-L../../' + target + variant + '/zlib/lib'
 		run_command(['./configure',
 			'--prefix=' + prefix,
-			'--with-zlib-prefix=../../' + target + '/zlib',
+			'--with-zlib-prefix=../../' + target + variant + '/zlib',
 			'--disable-shared'], env=env, cwd=libpng_dir);
 		run_command(['make'], cwd=libpng_dir)
 		run_command(['make', 'install'], cwd=libpng_dir)
 
 	print("Copying libpng files...")
-	os.makedirs(target + "/libpng/lib", exist_ok=True)
-	os.makedirs(target + "/libpng/include", exist_ok=True)
-	os.makedirs(target + "/libpng/dist", exist_ok=True)
+	os.makedirs(target + variant + "/libpng/lib", exist_ok=True)
+	os.makedirs(target + variant + "/libpng/include", exist_ok=True)
+	os.makedirs(target + variant + "/libpng/dist", exist_ok=True)
 	if target == 'windows':
-		shutil.copy(libpng_dir + "/libpng.lib", target + "/libpng/lib/")
-		shutil.copy(libpng_dir + "/png.h", target + "/libpng/include/")
-		shutil.copy(libpng_dir + "/pngconf.h", target + "/libpng/include/")
-		shutil.copy(libpng_dir + "/pnglibconf.h", target + "/libpng/include/")
+		shutil.copy(libpng_dir + "/libpng.lib", target + variant + "/libpng/lib/")
+		shutil.copy(libpng_dir + "/png.h", target + variant + "/libpng/include/")
+		shutil.copy(libpng_dir + "/pngconf.h", target + variant + "/libpng/include/")
+		shutil.copy(libpng_dir + "/pnglibconf.h", target + variant + "/libpng/include/")
 	else:
-		shutil.copy(libpng_dir + "/out/include/libpng16/png.h", target + "/libpng/include/")
-		shutil.copy(libpng_dir + "/out/include/libpng16/pngconf.h", target + "/libpng/include/")
-		shutil.copy(libpng_dir + "/out/include/libpng16/pnglibconf.h", target + "/libpng/include/")
-		shutil.copy(libpng_dir + "/out/lib/libpng16.a", target + "/libpng/lib/")
-		os.symlink("libpng16.a", target + "/libpng/lib/libpng.a")
-	shutil.copy(libpng_dir + "/LICENSE", target + "/libpng/dist/README-libpng.txt")
+		shutil.copy(libpng_dir + "/out/include/libpng16/png.h", target + variant + "/libpng/include/")
+		shutil.copy(libpng_dir + "/out/include/libpng16/pngconf.h", target + variant + "/libpng/include/")
+		shutil.copy(libpng_dir + "/out/include/libpng16/pnglibconf.h", target + variant + "/libpng/include/")
+		shutil.copy(libpng_dir + "/out/lib/libpng16.a", target + variant + "/libpng/lib/")
+		os.symlink("libpng16.a", target + variant + "/libpng/lib/libpng.a")
+	shutil.copy(libpng_dir + "/LICENSE", target + variant + "/libpng/dist/README-libpng.txt")
 
 def build_libogg():
 	lib_name = "libogg"
 	lib_dir = work_folder + "/" + libogg_filebase
 
 	print("Cleaning any existing " + lib_name + "...")
-	remove_if_exists(target + "/" + lib_name + "/")
+	remove_if_exists(target + variant + "/" + lib_name + "/")
 	remove_if_exists(lib_dir)
 
 	print("Fetching " + lib_name + "...")
@@ -435,12 +451,9 @@ def build_libogg():
 	else:
 		prefix = os.getcwd() + '/' + lib_dir + '/out';
 		env = os.environ.copy()
-		env['CPPFLAGS'] = '-O2'
-		env['CFLAGS'] = '-O2'
-		if target == 'macos':
-			env['CPPFLAGS'] = env['CPPFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
-			env['CFLAGS'] = env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
-		#env['LDFLAGS'] = '-L../../' + target + '/zlib/lib'
+		env['CPPFLAGS'] = '-O2 ' + variant_cflags[variant]
+		env['CFLAGS'] = '-O2 ' + variant_cflags[variant]
+		#env['LDFLAGS'] = '-L../../' + target + variant + '/zlib/lib'
 		run_command(['./configure',
 			'--prefix=' + prefix,
 			'--disable-dependency-tracking',
@@ -450,31 +463,31 @@ def build_libogg():
 		run_command(['make'], cwd=lib_dir)
 		run_command(['make', 'install'], cwd=lib_dir)
 	print("Copying " + lib_name + " files...")
-	os.makedirs(target + "/" + lib_name + "/lib", exist_ok=True)
-	os.makedirs(target + "/" + lib_name + "/include/ogg", exist_ok=True)
-	os.makedirs(target + "/" + lib_name + "/dist", exist_ok=True)
+	os.makedirs(target + variant + "/" + lib_name + "/lib", exist_ok=True)
+	os.makedirs(target + variant + "/" + lib_name + "/include/ogg", exist_ok=True)
+	os.makedirs(target + variant + "/" + lib_name + "/dist", exist_ok=True)
 	if target == 'windows':
-		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/libogg.lib", target + "/" + lib_name + "/lib/")
-		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/libogg.pdb", target + "/" + lib_name + "/lib/")
-		shutil.copy(lib_dir + "/include/ogg/ogg.h", target + "/" + lib_name + "/include/ogg/")
-		shutil.copy(lib_dir + "/include/ogg/os_types.h", target + "/" + lib_name + "/include/ogg/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/libogg.lib", target + variant + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/libogg.pdb", target + variant + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/include/ogg/ogg.h", target + variant + "/" + lib_name + "/include/ogg/")
+		shutil.copy(lib_dir + "/include/ogg/os_types.h", target + variant + "/" + lib_name + "/include/ogg/")
 	else:
-		shutil.copy(lib_dir + "/out/include/ogg/config_types.h", target + "/" + lib_name + "/include/ogg/")
-		shutil.copy(lib_dir + "/out/include/ogg/ogg.h", target + "/" + lib_name + "/include/ogg/")
-		shutil.copy(lib_dir + "/out/include/ogg/os_types.h", target + "/" + lib_name + "/include/ogg/")
+		shutil.copy(lib_dir + "/out/include/ogg/config_types.h", target + variant + "/" + lib_name + "/include/ogg/")
+		shutil.copy(lib_dir + "/out/include/ogg/ogg.h", target + variant + "/" + lib_name + "/include/ogg/")
+		shutil.copy(lib_dir + "/out/include/ogg/os_types.h", target + variant + "/" + lib_name + "/include/ogg/")
 		if target == 'macos':
-			replace_in_file(target + "/" + lib_name + "/include/ogg/os_types.h", [
+			replace_in_file(target + variant + "/" + lib_name + "/include/ogg/os_types.h", [
 				("#  include <sys/types.h>", "#include <stdint.h>")
 			])
-		shutil.copy(lib_dir + "/out/lib/libogg.a", target + "/" + lib_name + "/lib/")
-	shutil.copy(lib_dir + "/COPYING", target + "/" + lib_name + "/dist/README-libogg.txt")
+		shutil.copy(lib_dir + "/out/lib/libogg.a", target + variant + "/" + lib_name + "/lib/")
+	shutil.copy(lib_dir + "/COPYING", target + variant + "/" + lib_name + "/dist/README-libogg.txt")
 
 def build_libopus():
 	lib_name = "libopus"
 	lib_dir = work_folder + "/" + libopus_filebase
 
 	print("Cleaning any existing " + lib_name + "...")
-	remove_if_exists(target + "/" + lib_name + "/")
+	remove_if_exists(target + variant + "/" + lib_name + "/")
 	remove_if_exists(lib_dir)
 
 	print("Fetching " + lib_name + "...")
@@ -505,11 +518,8 @@ def build_libopus():
 	else:
 		prefix = os.getcwd() + '/' + lib_dir + '/out';
 		env = os.environ.copy()
-		env['CPPFLAGS'] = '-O2'
-		env['CFLAGS'] = '-O2'
-		if target == 'macos':
-			env['CPPFLAGS'] = env['CPPFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
-			env['CFLAGS'] = env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
+		env['CPPFLAGS'] = '-O2 ' + variant_cflags[variant]
+		env['CFLAGS'] = '-O2 ' + variant_cflags[variant]
 		run_command(['./configure',
 			'--prefix=' + prefix,
 			'--disable-dependency-tracking',
@@ -522,31 +532,31 @@ def build_libopus():
 		run_command(['make', 'install'], cwd=lib_dir)
 	
 	print("Copying " + lib_name + " files...")
-	os.makedirs(target + "/" + lib_name + "/lib", exist_ok=True)
-	os.makedirs(target + "/" + lib_name + "/include", exist_ok=True)
-	os.makedirs(target + "/" + lib_name + "/dist", exist_ok=True)
+	os.makedirs(target + variant + "/" + lib_name + "/lib", exist_ok=True)
+	os.makedirs(target + variant + "/" + lib_name + "/include", exist_ok=True)
+	os.makedirs(target + variant + "/" + lib_name + "/dist", exist_ok=True)
 	if target == 'windows':
-		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/opus.lib", target + "/" + lib_name + "/lib/")
-		shutil.copy(lib_dir + "/include/opus.h", target + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/include/opus_multistream.h", target + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/include/opus_types.h", target + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/include/opus_defines.h", target + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/include/opus_projection.h", target + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/opus.lib", target + variant + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/include/opus.h", target + variant + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/include/opus_multistream.h", target + variant + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/include/opus_types.h", target + variant + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/include/opus_defines.h", target + variant + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/include/opus_projection.h", target + variant + "/" + lib_name + "/include/")
 	else:
-		shutil.copy(lib_dir + "/out/include/opus/opus.h", target + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/out/include/opus/opus_multistream.h", target + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/out/include/opus/opus_types.h", target + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/out/include/opus/opus_defines.h", target + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/out/include/opus/opus_projection.h", target + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/out/lib/libopus.a", target + "/" + lib_name + "/lib/")
-	shutil.copy(lib_dir + "/COPYING", target + "/" + lib_name + "/dist/README-libopus.txt")
+		shutil.copy(lib_dir + "/out/include/opus/opus.h", target + variant + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/out/include/opus/opus_multistream.h", target + variant + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/out/include/opus/opus_types.h", target + variant + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/out/include/opus/opus_defines.h", target + variant + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/out/include/opus/opus_projection.h", target + variant + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/out/lib/libopus.a", target + variant + "/" + lib_name + "/lib/")
+	shutil.copy(lib_dir + "/COPYING", target + variant + "/" + lib_name + "/dist/README-libopus.txt")
 
 def build_libopusenc():
 	lib_name = "libopusenc"
 	lib_dir = work_folder + "/" + libopusenc_filebase
 
 	print("Cleaning any existing " + lib_name + "...")
-	remove_if_exists(target + "/" + lib_name + "/")
+	remove_if_exists(target + variant + "/" + lib_name + "/")
 	remove_if_exists(lib_dir)
 
 	print("Fetching " + lib_name + "...")
@@ -581,13 +591,11 @@ def build_libopusenc():
 	else:
 		prefix = os.getcwd() + '/' + lib_dir + '/out';
 		env = os.environ.copy()
-		env['CPPFLAGS'] = '-O2'
-		env['CFLAGS'] = '-O2'
-		env['DEPS_CFLAGS'] = '-I../../' + target + '/libogg/include -I../../' + target + '/libopus/include'
-		env['DEPS_LIBS'] = '-L../../' + target + '/libogg/lib -L../../' + target + '/libopus/lib -lopus'
-		if target == 'macos':
-			env['CPPFLAGS'] = env['CPPFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
-			env['CFLAGS'] = env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
+		env['CPPFLAGS'] = '-O2 ' + variant_cflags[variant]
+		env['CFLAGS'] = '-O2 ' + variant_cflags[variant]
+
+		env['DEPS_CFLAGS'] = '-I../../' + target + variant + '/libogg/include -I../../' + target + variant + '/libopus/include'
+		env['DEPS_LIBS'] = '-L../../' + target + variant + '/libogg/lib -L../../' + target + variant + '/libopus/lib -lopus'
 		run_command(['./configure',
 			'--prefix=' + prefix,
 			'--disable-dependency-tracking',
@@ -600,16 +608,16 @@ def build_libopusenc():
 		run_command(['make', 'install'], cwd=lib_dir)
 	
 	print("Copying " + lib_name + " files...")
-	os.makedirs(target + "/" + lib_name + "/lib", exist_ok=True)
-	os.makedirs(target + "/" + lib_name + "/include", exist_ok=True)
-	os.makedirs(target + "/" + lib_name + "/dist", exist_ok=True)
+	os.makedirs(target + variant + "/" + lib_name + "/lib", exist_ok=True)
+	os.makedirs(target + variant + "/" + lib_name + "/include", exist_ok=True)
+	os.makedirs(target + variant + "/" + lib_name + "/dist", exist_ok=True)
 	if target == 'windows':
-		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/opusenc.lib", target + "/" + lib_name + "/lib/")
-		shutil.copy(lib_dir + "/include/opusenc.h", target + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/opusenc.lib", target + variant + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/include/opusenc.h", target + variant + "/" + lib_name + "/include/")
 	else:
-		shutil.copy(lib_dir + "/out/include/opus/opusenc.h", target + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/out/lib/libopusenc.a", target + "/" + lib_name + "/lib/")
-	shutil.copy(lib_dir + "/COPYING", target + "/" + lib_name + "/dist/README-libopusenc.txt")
+		shutil.copy(lib_dir + "/out/include/opus/opusenc.h", target + variant + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/out/lib/libopusenc.a", target + variant + "/" + lib_name + "/lib/")
+	shutil.copy(lib_dir + "/COPYING", target + variant + "/" + lib_name + "/dist/README-libopusenc.txt")
 
 
 
@@ -618,7 +626,7 @@ def build_opusfile():
 	lib_dir = work_folder + "/" + opusfile_filebase
 
 	print("Cleaning any existing " + lib_name + "...")
-	remove_if_exists(target + "/" + lib_name + "/")
+	remove_if_exists(target + variant + "/" + lib_name + "/")
 	remove_if_exists(lib_dir)
 
 	print("Fetching " + lib_name + "...")
@@ -657,14 +665,11 @@ def build_opusfile():
 	else:
 		prefix = os.getcwd() + '/' + lib_dir + '/out';
 		env = os.environ.copy()
-		env['CPPFLAGS'] = '-O2'
-		env['CFLAGS'] = '-O2'
-		env['DEPS_CFLAGS'] = '-I../../' + target + '/libogg/include -I../../' + target + '/libopus/include'
-		env['DEPS_LIBS'] = '-L../../' + target + '/libogg/lib -L../../' + target + '/libopus/lib'
-		if target == 'macos':
-			env['CPPFLAGS'] = env['CPPFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
-			env['CFLAGS'] = env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
-		#env['LDFLAGS'] = '-L../../' + target + '/zlib/lib'
+		env['CPPFLAGS'] = '-O2 ' + variant_cflags[variant]
+		env['CFLAGS'] = '-O2 ' + variant_cflags[variant]
+		env['DEPS_CFLAGS'] = '-I../../' + target + variant + '/libogg/include -I../../' + target + variant + '/libopus/include'
+		env['DEPS_LIBS'] = '-L../../' + target + variant + '/libogg/lib -L../../' + target + variant + '/libopus/lib'
+		#env['LDFLAGS'] = '-L../../' + target + variant + '/zlib/lib'
 		run_command(['./configure',
 			'--prefix=' + prefix,
 			'--disable-dependency-tracking',
@@ -673,31 +678,31 @@ def build_opusfile():
 			'--disable-http',
 			'--disable-examples',
 			'--disable-doc'
-			#'--with-zlib-prefix=../../' + target + '/zlib',
+			#'--with-zlib-prefix=../../' + target + variant + '/zlib',
 			], env=env, cwd=lib_dir);
 		run_command(['make'], cwd=lib_dir)
 		run_command(['make', 'install'], cwd=lib_dir)
 
 	print("Copying " + lib_name + " files...")
-	os.makedirs(target + "/" + lib_name + "/lib", exist_ok=True)
-	os.makedirs(target + "/" + lib_name + "/include", exist_ok=True)
-	os.makedirs(target + "/" + lib_name + "/dist", exist_ok=True)
+	os.makedirs(target + variant + "/" + lib_name + "/lib", exist_ok=True)
+	os.makedirs(target + variant + "/" + lib_name + "/include", exist_ok=True)
+	os.makedirs(target + variant + "/" + lib_name + "/dist", exist_ok=True)
 	if target == 'windows':
-		shutil.copy(lib_dir + "/win32/VS2015/x64/Release-NoHTTP/opusfile.lib", target + "/" + lib_name + "/lib/")
-		shutil.copy(lib_dir + "/win32/VS2015/x64/Release-NoHTTP/opusfile.pdb", target + "/" + lib_name + "/lib/")
-		shutil.copy(lib_dir + "/include/opusfile.h", target + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release-NoHTTP/opusfile.lib", target + variant + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release-NoHTTP/opusfile.pdb", target + variant + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/include/opusfile.h", target + variant + "/" + lib_name + "/include/")
 	else:
-		shutil.copy(lib_dir + "/out/include/opus/opusfile.h", target + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/out/lib/libopusfile.a", target + "/" + lib_name + "/lib/")
-		shutil.copy(lib_dir + "/out/lib/libopusurl.a", target + "/" + lib_name + "/lib/")
-	shutil.copy(lib_dir + "/COPYING", target + "/" + lib_name + "/dist/README-opusfile.txt")
+		shutil.copy(lib_dir + "/out/include/opus/opusfile.h", target + variant + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/out/lib/libopusfile.a", target + variant + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/out/lib/libopusurl.a", target + variant + "/" + lib_name + "/lib/")
+	shutil.copy(lib_dir + "/COPYING", target + variant + "/" + lib_name + "/dist/README-opusfile.txt")
 
 def build_opustools():
 	lib_name = "opus-tools"
 	lib_dir = work_folder + "/" + opustools_filebase
 
 	print("Cleaning any existing " + lib_name + "...")
-	remove_if_exists(target + "/" + lib_name + "/")
+	remove_if_exists(target + variant + "/" + lib_name + "/")
 	remove_if_exists(lib_dir)
 
 	print("Fetching " + lib_name + "...")
@@ -759,23 +764,20 @@ def build_opustools():
 	else:
 		prefix = os.getcwd() + '/' + lib_dir + '/out';
 		env = os.environ.copy()
-		env['CPPFLAGS'] = '-O2'
-		env['CFLAGS'] = '-O2'
+		env['CPPFLAGS'] = '-O2 ' + variant_cflags[variant]
+		env['CFLAGS'] = '-O2 ' + variant_cflags[variant]
 		env['LIBS'] = ''
-		env['OGG_CFLAGS'] = '-I../../' + target + '/libogg/include'
-		env['OGG_LIBS'] = '-L../../' + target + '/libogg/lib -logg'
-		env['OPUS_CFLAGS'] = '-I../../' + target + '/libopus/include'
-		env['OPUS_LIBS'] = '-L../../' + target + '/libopus/lib -lopus -lm'
-		env['OPUSFILE_CFLAGS'] = '-I../../' + target + '/opusfile/include'
-		env['OPUSFILE_LIBS'] = '-L../../' + target + '/opusfile/lib -lopusfile' + ' ' + env['OGG_LIBS']
-		env['OPUSURL_CFLAGS'] = '-I../../' + target + '/opusfile/include'
-		env['OPUSURL_LIBS'] = '-L../../' + target + '/opusfile/lib -lopusurl -lopusfile' +  ' ' + env['OGG_LIBS']
-		env['LIBOPUSENC_CFLAGS'] = '-I../../' + target + '/libopusenc/include'
-		env['LIBOPUSENC_LIBS'] = '-L../../' + target + '/libopusenc/lib -lopusenc'
+		env['OGG_CFLAGS'] = '-I../../' + target + variant + '/libogg/include'
+		env['OGG_LIBS'] = '-L../../' + target + variant + '/libogg/lib -logg'
+		env['OPUS_CFLAGS'] = '-I../../' + target + variant + '/libopus/include'
+		env['OPUS_LIBS'] = '-L../../' + target + variant + '/libopus/lib -lopus -lm'
+		env['OPUSFILE_CFLAGS'] = '-I../../' + target + variant + '/opusfile/include'
+		env['OPUSFILE_LIBS'] = '-L../../' + target + variant + '/opusfile/lib -lopusfile' + ' ' + env['OGG_LIBS']
+		env['OPUSURL_CFLAGS'] = '-I../../' + target + variant + '/opusfile/include'
+		env['OPUSURL_LIBS'] = '-L../../' + target + variant + '/opusfile/lib -lopusurl -lopusfile' +  ' ' + env['OGG_LIBS']
+		env['LIBOPUSENC_CFLAGS'] = '-I../../' + target + variant + '/libopusenc/include'
+		env['LIBOPUSENC_LIBS'] = '-L../../' + target + variant + '/libopusenc/lib -lopusenc'
 		env['HAVE_PKG_CONFIG'] = 'no'
-		if target == 'macos':
-			env['CPPFLAGS'] = env['CPPFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
-			env['CFLAGS'] = env['CFLAGS'] + ' -mmacosx-version-min=' + min_osx_version
 
 		#seems like with no pkg config, the values of these variables are not respected, so they need to be added to CFLAGS/LIBS directly:
 		env['CFLAGS'] = (env['CFLAGS']
@@ -809,15 +811,15 @@ def build_opustools():
 		run_command(['make', 'install'], cwd=lib_dir)
 	
 	print("Copying " + lib_name + " files...")
-	os.makedirs(target + "/" + lib_name + "/bin", exist_ok=True)
+	os.makedirs(target + variant + "/" + lib_name + "/bin", exist_ok=True)
 	if target == 'windows':
-		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/opusenc.exe", target + "/" + lib_name + "/bin/")
-		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/opusdec.exe", target + "/" + lib_name + "/bin/")
-		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/opusinfo.exe", target + "/" + lib_name + "/bin/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/opusenc.exe", target + variant + "/" + lib_name + "/bin/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/opusdec.exe", target + variant + "/" + lib_name + "/bin/")
+		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/opusinfo.exe", target + variant + "/" + lib_name + "/bin/")
 	else:
-		shutil.copy(lib_dir + "/out/bin/opusenc", target + "/" + lib_name + "/bin/")
-		shutil.copy(lib_dir + "/out/bin/opusdec", target + "/" + lib_name + "/bin/")
-		shutil.copy(lib_dir + "/out/bin/opusinfo", target + "/" + lib_name + "/bin/")
+		shutil.copy(lib_dir + "/out/bin/opusenc", target + variant + "/" + lib_name + "/bin/")
+		shutil.copy(lib_dir + "/out/bin/opusdec", target + variant + "/" + lib_name + "/bin/")
+		shutil.copy(lib_dir + "/out/bin/opusinfo", target + variant + "/" + lib_name + "/bin/")
 
 
 def fetch_jam():
@@ -835,7 +837,7 @@ def build_harfbuzz():
 	lib_dir = work_folder + "/harfbuzz-" + harfbuzz_filebase
 
 	print("Cleaning any existing " + lib_name + "...")
-	remove_if_exists(target + "/" + lib_name + "/")
+	remove_if_exists(target + variant + "/" + lib_name + "/")
 	remove_if_exists(lib_dir)
 
 	print("Fetching " + lib_name + "...")
@@ -853,18 +855,21 @@ def build_harfbuzz():
 	replace_in_file(lib_dir + "/CMakeLists.txt", [
 		('  include (FindFreetype)', '  #include (FindFreetype)  # <-- hack to avoid picking up system freetype'),
 	])
+	replace_in_file(lib_dir + "/meson.build", [
+		("if not get_option('freetype').disabled()", "if false # <--- hack to avoid freetype search"),
+		("if freetype_dep.found()", "if true # <--- more hack"),
+	])
 
 
 	if target == 'windows':
 		env = os.environ.copy()
-		os.makedirs(lib_dir + "/build", exist_ok=True)
 		run_command([
-			"cmake", "..",
+			"cmake", "-B", "build",
 			"-DHB_HAVE_FREETYPE=ON",
 			"-DFREETYPE_FOUND=1", #<-- hack!
-			"-DFREETYPE_INCLUDE_DIRS=..\\..\\" + target + "\\freetype\\include",
-			"-DFREETYPE_LIBRARY=..\\..\\..\\" + target + "\\freetype\\lib\\freetype",
-		], env=env, cwd=lib_dir + "/build")
+			"-DFREETYPE_INCLUDE_DIRS=..\\..\\" + target + variant + "\\freetype\\include",
+			"-DFREETYPE_LIBRARY=..\\..\\..\\" + target + variant + "\\freetype\\lib\\freetype",
+		] + variant_cmake_flags[variant], env=env, cwd=lib_dir)
 		run_command([
 			"msbuild", "/m",
 			"harfbuzz.sln",
@@ -872,30 +877,60 @@ def build_harfbuzz():
 			"/p:Configuration=RelWithDebInfo"
 		],env=env, cwd=lib_dir + "/build")
 	else:
+		cross_file = []
+		if target == 'macos':
+			cross_file = ["--cross-file", "cross.txt"]
+			f = open(f"{lib_dir}/cross.txt", 'wb')
+			if variant == '-x86':
+				#based on https://github.com/mesonbuild/meson/issues/8206
+				f.write("""
+					[host_machine]
+					system = 'darwin'
+					cpu_family='x86_64'
+					cpu='x86_64'
+					endian='little'
+					[binaries]
+					c=['clang', '-target', 'x86_64-apple-macos10.9', '-mmacosx-version-min=10.9']
+					cpp=['clang++', '-target', 'x86_64-apple-macos10.9', '-mmacosx-version-min=10.9']
+					strip='strip'
+				""".encode('utf8'))
+			elif variant == '-arm':
+				f.write("""
+					[host_machine]
+					system = 'darwin'
+					cpu_family='x86_64'
+					cpu='x86_64'
+					endian='little'
+					[binaries]
+					c=['clang', '-target', 'arm64-apple-macos11', '-mmacosx-version-min=11']
+					cpp=['clang++', '-target', 'arm64-apple-macos11', '-mmacosx-version-min=11']
+					strip='strip'
+				""".encode('utf8'))
+			else:
+				assert(False, "invalid target " + target)
+			f.close()
 		env = os.environ.copy()
-		os.makedirs(lib_dir + "/build", exist_ok=True)
 		run_command([
-			"cmake", "..",
-			"-DCMAKE_BUILD_TYPE=RelWithDebInfo",
-			"-DFREETYPE_FOUND=1", #<-- hack!
-			"-DHB_HAVE_FREETYPE=ON",
-			"-DFREETYPE_INCLUDE_DIRS=../../" + target + "/freetype/include",
-			"-DFREETYPE_LIBRARIES=-L../../../" + target + "/freetype/lib/ -lfreetype",
-            "-DCMAKE_CXX_FLAGS=-std=c++11"
-		], env=env, cwd=lib_dir + "/build")
+			"meson", "setup", "build"]
+			+ cross_file + [
+			"-Dbuildtype=debugoptimized",
+			"-Ddefault_library=static",
+			"-Dfreetype=enabled",
+			"-Dcpp_args=-I../../../" + target + variant + "/freetype/include",
+		], env=env, cwd=lib_dir)
 		run_command([
-			"make", "-j3", "harfbuzz"
-		],env=env, cwd=lib_dir + "/build")
+			"meson", "compile", "-Cbuild", "harfbuzz"
+		], env=env, cwd=lib_dir)
 
 	print("copying " + lib_name + " files...")
-	os.makedirs(target + "/harfbuzz/lib", exist_ok=True)
-	os.makedirs(target + "/harfbuzz/include", exist_ok=True)
-	os.makedirs(target + "/harfbuzz/dist", exist_ok=True)
+	os.makedirs(target + variant + "/harfbuzz/lib", exist_ok=True)
+	os.makedirs(target + variant + "/harfbuzz/include", exist_ok=True)
+	os.makedirs(target + variant + "/harfbuzz/dist", exist_ok=True)
 	if target == 'windows':
-		shutil.copy(lib_dir + "/build/RelWithDebInfo/harfbuzz.lib", target + "/harfbuzz/lib/")
-		shutil.copy(lib_dir + "/build/RelWithDebInfo/harfbuzz.pdb", target + "/harfbuzz/lib/")
+		shutil.copy(lib_dir + "/build/RelWithDebInfo/harfbuzz.lib", target + variant + "/harfbuzz/lib/")
+		shutil.copy(lib_dir + "/build/RelWithDebInfo/harfbuzz.pdb", target + variant + "/harfbuzz/lib/")
 	else:
-		shutil.copy(lib_dir + "/build/libharfbuzz.a", target + "/harfbuzz/lib/")
+		shutil.copy(lib_dir + "/build/src/libharfbuzz.a", target + variant + "/harfbuzz/lib/")
 
 	for header in [
 		"hb-aat.h",
@@ -938,8 +973,8 @@ def build_harfbuzz():
 		"hb-uniscribe.h",
 		"hb-version.h"
 		]:
-		shutil.copy(lib_dir + "/src/" + header, target + "/harfbuzz/include/")
-	shutil.copy(lib_dir + "/COPYING", target + "/harfbuzz/dist/README-harfbuzz.txt")
+		shutil.copy(lib_dir + "/src/" + header, target + variant + "/harfbuzz/include/")
+	shutil.copy(lib_dir + "/COPYING", target + variant + "/harfbuzz/dist/README-harfbuzz.txt")
 
 
 def build_freetype():
@@ -947,7 +982,7 @@ def build_freetype():
 	lib_dir = work_folder + "/" + freetype_filebase
 
 	print("Cleaning any existing " + lib_name + "...")
-	remove_if_exists(target + "/" + lib_name + "/")
+	remove_if_exists(target + variant + "/" + lib_name + "/")
 	remove_if_exists(lib_dir)
 
 	print("Fetching " + lib_name + "...")
@@ -971,6 +1006,11 @@ def build_freetype():
 		#but actually enable error strings:
 		('/* #define FT_CONFIG_OPTION_ERROR_STRINGS */', '#define FT_CONFIG_OPTION_ERROR_STRINGS'),
 	])
+
+	env = os.environ.copy()
+	env['CC'] = 'what'
+	env['CFLAGS'] = variant_cflags[variant]
+	env['CXXFLAGS'] = variant_cflags[variant]
 	run_command([
 		"cmake",
 		"-B", "build",
@@ -980,32 +1020,33 @@ def build_freetype():
 		"-D", "CMAKE_DISABLE_FIND_PACKAGE_PNG=TRUE",
 		"-D", "CMAKE_DISABLE_FIND_PACKAGE_HarfBuzz=TRUE",
 		"-D", "CMAKE_DISABLE_FIND_PACKAGE_BrotliDec=TRUE"
-	], cwd=lib_dir)
+	] + variant_cmake_flags[variant], cwd=lib_dir, env=env)
 
 	run_command([
 		"cmake",
 		"--build", "build",
-		"--config", "RelWithDebInfo"
-	], cwd=lib_dir)
+		"--config", "RelWithDebInfo",
+		"-j", str(jobs)
+	], cwd=lib_dir, env=env)
 
 
 	print("copying " + lib_name + " files...")
-	os.makedirs(target + "/freetype/lib", exist_ok=True)
-	os.makedirs(target + "/freetype/include", exist_ok=True)
-	os.makedirs(target + "/freetype/dist", exist_ok=True)
+	os.makedirs(target + variant + "/freetype/lib", exist_ok=True)
+	os.makedirs(target + variant + "/freetype/include", exist_ok=True)
+	os.makedirs(target + variant + "/freetype/dist", exist_ok=True)
 	if target == 'windows':
-		shutil.copy(lib_dir + "/build/RelWithDebInfo/freetype.lib", target + "/freetype/lib/")
-		shutil.copy(lib_dir + "/build/RelWithDebInfo/freetype.pdb", target + "/freetype/lib/")
+		shutil.copy(lib_dir + "/build/RelWithDebInfo/freetype.lib", target + variant + "/freetype/lib/")
+		shutil.copy(lib_dir + "/build/RelWithDebInfo/freetype.pdb", target + variant + "/freetype/lib/")
 	else:
 		#todo: check what gets build on other oses:
-		shutil.copy(lib_dir + "/build/libfreetype.a", target + "/freetype/lib/")
-	shutil.copy(lib_dir + "/include/ft2build.h", target + "/freetype/include/")
-	shutil.copytree(lib_dir + "/include/freetype/", target + "/freetype/include/freetype/")
-	shutil.copy(lib_dir + "/build/include/freetype/config/ftconfig.h", target + "/freetype/include/freetype/config/")
-	shutil.copy(lib_dir + "/build/include/freetype/config/ftoption.h", target + "/freetype/include/freetype/config/")
+		shutil.copy(lib_dir + "/build/libfreetype.a", target + variant + "/freetype/lib/")
+	shutil.copy(lib_dir + "/include/ft2build.h", target + variant + "/freetype/include/")
+	shutil.copytree(lib_dir + "/include/freetype/", target + variant + "/freetype/include/freetype/")
+	shutil.copy(lib_dir + "/build/include/freetype/config/ftconfig.h", target + variant + "/freetype/include/freetype/config/")
+	shutil.copy(lib_dir + "/build/include/freetype/config/ftoption.h", target + variant + "/freetype/include/freetype/config/")
 	#This isn't quite right, since the FTL only requires acknowledgement in documentation:
-	#shutil.copy(lib_dir + "/doc/FTL.TXT", target + "/freetype/dist/")
-	f = open(target + '/freetype/dist/README-freetype.txt', 'wb')
+	#shutil.copy(lib_dir + "/doc/FTL.TXT", target + variant + "/freetype/dist/")
+	f = open(target + variant + '/freetype/dist/README-freetype.txt', 'wb')
 	f.write('Freetype used under the provisions of the FTL.\n\nPortions of this software are copyright \u00A9 2020 The FreeType Project (www.freetype.org).  All rights reserved.\n'.encode('utf8'))
 	f.close()
 
@@ -1022,23 +1063,23 @@ def make_package():
 				l.write('nest-libs/' + dirpath + '/' + fn + '\n')
 	#Eventually might do this:
 	#Also create a package directory because of the unique way in which artifact uploads work :-/
-	#remove_if_exists(target + "/package/")
+	#remove_if_exists(target + variant + "/package/")
 	#os.makedirs(work_folder + "/package")
 	#shutil.copy('README.md', work_folder + "/package/")
-	#shutil.copytree(target + "/", work_folder + "/package/target/")
+	#shutil.copytree(target + variant + "/", work_folder + "/package/target/")
 	
 	if target == 'windows':
 		run_command([
 			"C:\\Program Files\\7-Zip\\7z.exe",
 			"a",
-			"nest-libs\\nest-libs-" + target + "-" + tag + ".zip",
+			"nest-libs\\nest-libs-" + target + variant + "-" + tag + ".zip",
 			"@nest-libs\\work\\listfile"
 		], cwd='..')
 	else:
 		run_command([
 			'tar',
 			'cfz',
-			'nest-libs/nest-libs-' + target + "-" + tag + ".tar.gz",
+			'nest-libs/nest-libs-' + target + variant + "-" + tag + ".tar.gz",
 			"--files-from", "nest-libs/work/listfile"
 		], cwd='..')
 		
@@ -1058,37 +1099,48 @@ if "jam" in to_build:
 	fetch_jam()
 
 if "freetype" in to_build:
-	build_freetype()
+	for variant in variants:
+		build_freetype()
 
 if "harfbuzz" in to_build:
-	build_harfbuzz()
+	for variant in variants:
+		build_harfbuzz()
 
 if "SDL2" in to_build:
-	build_SDL2()
+	for variant in variants:
+		build_SDL2()
 
 if "glm" in to_build:
-	build_glm()
+	for variant in variants:
+		build_glm()
 
 if "zlib" in to_build:
-	build_zlib()
+	for variant in variants:
+		build_zlib()
 
 if "libpng" in to_build:
-	build_libpng()
+	for variant in variants:
+		build_libpng()
 
 if "libopus" in to_build:
-	build_libopus()
+	for variant in variants:
+		build_libopus()
 
 if "libogg" in to_build:
-	build_libogg()
+	for variant in variants:
+		build_libogg()
 
 if "opusfile" in to_build:
-	build_opusfile()
+	for variant in variants:
+		build_opusfile()
 
 if "libopusenc" in to_build:
-	build_libopusenc()
+	for variant in variants:
+		build_libopusenc()
 
 if "opus-tools" in to_build:
-	build_opustools()
+	for variant in variants:
+		build_opustools()
 
 if "package" in to_build:
 	make_package()
