@@ -28,7 +28,7 @@ elif 'GITHUB_SHA' in os.environ:
 
 variant = ''
 variant_cflags = { '':'' }
-variant_cmake_flags = { '':'' }
+variant_cmake_flags = { '':[''] }
 
 
 jobs = os.cpu_count() + 1
