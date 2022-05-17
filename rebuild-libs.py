@@ -919,7 +919,7 @@ def build_harfbuzz():
 			"-Dcpp_args=-I../../../" + target + variant + "/freetype/include",
 		], env=env, cwd=lib_dir)
 		run_command([
-			"meson", "compile", "-Cbuild", "harfbuzz"
+			"meson", "compile", "-C", "build", "harfbuzz"
 		], env=env, cwd=lib_dir)
 
 	print("copying " + lib_name + " files...")
