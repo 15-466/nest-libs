@@ -29,6 +29,7 @@ elif 'GITHUB_SHA' in os.environ:
 variant = ''
 variant_cflags = { '':'' }
 variant_cmake_flags = { '':[''] }
+variant_configure_flags = { '':[''] }
 
 
 jobs = os.cpu_count() + 1
@@ -46,6 +47,10 @@ elif platform.system() == 'Darwin':
 	variant_cmake_flags = {
 		'-x86':['-DCMAKE_OSX_DEPLOYMENT_TARGET=10.9', '-DCMAKE_APPLE_SILICON_PROCESSOR=x86_64', '-DCMAKE_OSX_DEPLOYMENT_TARGET='],
 		'-arm':['-DCMAKE_OSX_DEPLOYMENT_TARGET=11', '-DCMAKE_APPLE_SILICON_PROCESSOR=arm64', '-DCMAKE_OSX_DEPLOYMENT_TARGET=']
+	}
+	variant_configure_flags = {
+		'-x86':['--host=x86_64-apple-darwin'],
+		'-arm':['--host=aarch64-apple-darwin']
 	}
 	variants = list(variant_cflags.keys())
 elif platform.system() == 'Windows':
@@ -101,7 +106,7 @@ opustools_url = "https://archive.mozilla.org/pub/opus/" + opustools_filebase + "
 jam_file = 'ftjam-2.5.2-win32.zip'
 jam_url = 'https://sourceforge.net/projects/freetype/files/ftjam/2.5.2/' + jam_file + '/download'
 
-freetype_filebase = 'freetype-2.11.0'
+freetype_filebase = 'freetype-2.12.1'
 freetype_url = 'https://download.savannah.gnu.org/releases/freetype/' + freetype_filebase + '.tar.gz'
 
 harfbuzz_filebase = '2.9.0'
@@ -188,7 +193,7 @@ def build_SDL2():
 		prefix = os.getcwd() + '/' + SDL2_dir + '/out'
 		if target == 'macos':
 			env['CFLAGS'] = variant_cflags[variant]
-			run_command(['../configure', '--prefix=' + prefix,
+			run_command(['../configure'] + variant_configure_flags[variant] + ['--prefix=' + prefix,
 				'--disable-shared', '--enable-static',
 				'--disable-render',
 				'--enable-haptic', #force feedback framework required by joystick code anyway
@@ -223,8 +228,13 @@ def build_SDL2():
 				'--disable-directx',
 				'--disable-render',
 			],env=env,cwd=SDL2_dir + '/build')
+			immintrin_def = "#ifndef __aarch64__\n#define HAVE_IMMINTRIN_H 1\n#endif\n"
+			replace_in_file(SDL2_dir + "/build/include/SDL_config.h", [
+				("#define HAVE_IMMINTRIN_H 1\n", immintrin_def),
+				("/* #undef HAVE_IMMINTRIN_H */\n", immintrin_def)
+			])
 		else:
-			run_command(['../configure', '--prefix=' + prefix,
+			run_command(['../configure'] + variant_configure_flags[variant] + ['--prefix=' + prefix,
 				'--disable-shared', '--enable-static',
 				'--disable-render', '--disable-haptic', '--disable-file', '--disable-filesystem', '--disable-loadso', '--disable-power', '--disable-sensor', '--disable-hidapi',
 				'--enable-sse2',
@@ -269,7 +279,10 @@ def build_SDL2():
 				for line in i:
 					if re.match('^prefix=.*$', line) != None:
 						assert(not found_prefix)
-						o.write("prefix=../nest-libs/" + target + variant + "/SDL2\n")
+						if target == 'macos':
+							o.write("prefix=../nest-libs/" + target + "/SDL2\n") #will eventually merge into this path
+						else:
+							o.write("prefix=../nest-libs/" + target + variant + "/SDL2\n")
 						found_prefix = True
 					else:
 						o.write(line)
@@ -340,6 +353,7 @@ def build_zlib():
 		env = os.environ.copy()
 		env['prefix'] = 'out'
 		env['CFLAGS'] = variant_cflags[variant]
+		#NOTE: not passing variant_configure_flags because this isn't really a (recent) autoconf script:
 		run_command(['./configure', '--static'], env=env, cwd=zlib_dir)
 		run_command(['make'], cwd=zlib_dir)
 		run_command(['make', 'install'], cwd=zlib_dir)
@@ -393,7 +407,7 @@ def build_libpng():
 		env['CPPFLAGS'] = env['CPPFLAGS'] + ' ' + variant_cflags[variant]
 		env['CFLAGS'] = env['CFLAGS'] + ' ' + variant_cflags[variant]
 		env['LDFLAGS'] = '-L../../' + target + variant + '/zlib/lib'
-		run_command(['./configure',
+		run_command(['./configure'] + variant_configure_flags[variant] + [
 			'--prefix=' + prefix,
 			'--with-zlib-prefix=../../' + target + variant + '/zlib',
 			'--disable-shared'], env=env, cwd=libpng_dir);
@@ -454,7 +468,7 @@ def build_libogg():
 		env['CPPFLAGS'] = '-O2 ' + variant_cflags[variant]
 		env['CFLAGS'] = '-O2 ' + variant_cflags[variant]
 		#env['LDFLAGS'] = '-L../../' + target + variant + '/zlib/lib'
-		run_command(['./configure',
+		run_command(['./configure'] + variant_configure_flags[variant] + [
 			'--prefix=' + prefix,
 			'--disable-dependency-tracking',
 			'--enable-static',
@@ -520,7 +534,7 @@ def build_libopus():
 		env = os.environ.copy()
 		env['CPPFLAGS'] = '-O2 ' + variant_cflags[variant]
 		env['CFLAGS'] = '-O2 ' + variant_cflags[variant]
-		run_command(['./configure',
+		run_command(['./configure'] + variant_configure_flags[variant] + [
 			'--prefix=' + prefix,
 			'--disable-dependency-tracking',
 			'--enable-static',
@@ -596,7 +610,7 @@ def build_libopusenc():
 
 		env['DEPS_CFLAGS'] = '-I../../' + target + variant + '/libogg/include -I../../' + target + variant + '/libopus/include'
 		env['DEPS_LIBS'] = '-L../../' + target + variant + '/libogg/lib -L../../' + target + variant + '/libopus/lib -lopus'
-		run_command(['./configure',
+		run_command(['./configure'] + variant_configure_flags[variant] + [
 			'--prefix=' + prefix,
 			'--disable-dependency-tracking',
 			'--enable-static',
@@ -670,7 +684,7 @@ def build_opusfile():
 		env['DEPS_CFLAGS'] = '-I../../' + target + variant + '/libogg/include -I../../' + target + variant + '/libopus/include'
 		env['DEPS_LIBS'] = '-L../../' + target + variant + '/libogg/lib -L../../' + target + variant + '/libopus/lib'
 		#env['LDFLAGS'] = '-L../../' + target + variant + '/zlib/lib'
-		run_command(['./configure',
+		run_command(['./configure'] + variant_configure_flags[variant] + [
 			'--prefix=' + prefix,
 			'--disable-dependency-tracking',
 			'--enable-static',
@@ -793,7 +807,7 @@ def build_opustools():
 			+ ' ' + env['OPUSFILE_LIBS']
 			+ ' ' + env['OPUSURL_LIBS'] )
 
-		run_command(['./configure',
+		run_command(['./configure'] + variant_configure_flags[variant] + [
 			'--prefix=' + prefix,
 			'--disable-dependency-tracking',
 			'--without-flac',
