@@ -9,7 +9,7 @@ jobs:
   build-windows:
     name: Build (Windows)
     runs-on: windows-latest
-    if: !(contains(github.event.head_commit.message, 'onlyMac') || contains(github.event.head_commit.message, 'onlyLinux'))
+    if: (contains(github.event.head_commit.message, 'onlyMac') || contains(github.event.head_commit.message, 'onlyLinux')) != true
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
@@ -45,7 +45,7 @@ jobs:
   build-linux:
     name: Build (Linux)
     runs-on: ubuntu-latest
-    if: !(contains(github.event.head_commit.message, 'onlyWindows') || contains(github.event.head_commit.message, 'onlyMac'))
+    if: (contains(github.event.head_commit.message, 'onlyWindows') || contains(github.event.head_commit.message, 'onlyMac')) != true
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
@@ -78,7 +78,7 @@ jobs:
   build-macos:
     name: Build (MacOS)
     runs-on: macos-latest
-    if: !(contains(github.event.head_commit.message, 'onlyWindows') || contains(github.event.head_commit.message, 'onlyLinux'))
+    if: (contains(github.event.head_commit.message, 'onlyWindows') || contains(github.event.head_commit.message, 'onlyLinux')) != true
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
