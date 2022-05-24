@@ -9,6 +9,7 @@ jobs:
   build-windows:
     name: Build (Windows)
     runs-on: windows-latest
+    if: contains(github.event.head_commit.message, 'runWindows')
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
@@ -44,6 +45,7 @@ jobs:
   build-linux:
     name: Build (Linux)
     runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, 'runLinux')
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
@@ -51,7 +53,8 @@ jobs:
         shell: bash
         run: |
           sudo apt update
-          sudo apt install ftjam libgl-dev libasound2-dev libpulse-dev meson #some of these probably needed for fullscreen: libxinerama-dev libxinput2-dev libxrandr-dev libxscrnsaver-dev libxvidmode-dev
+          sudo apt install ftjam libgl-dev libasound2-dev libpulse-dev #some of these probably needed for fullscreen: libxinerama-dev libxinput2-dev libxrandr-dev libxscrnsaver-dev libxvidmode-dev
+          pip3 install --user meson
           python3 rebuild-libs.py all package
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
@@ -75,6 +78,7 @@ jobs:
   build-macos:
     name: Build (MacOS)
     runs-on: macos-latest
+    if: contains(github.event.head_commit.message, 'runMac')
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
