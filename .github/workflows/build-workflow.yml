@@ -53,7 +53,7 @@ jobs:
         shell: bash
         run: |
           sudo apt update
-          sudo apt install ftjam libgl-dev libasound2-dev libpulse-dev ninja #some of these probably needed for fullscreen: libxinerama-dev libxinput2-dev libxrandr-dev libxscrnsaver-dev libxvidmode-dev
+          sudo apt install ftjam libgl-dev libasound2-dev libpulse-dev ninja-build #some of these probably needed for fullscreen: libxinerama-dev libxinput2-dev libxrandr-dev libxscrnsaver-dev libxvidmode-dev
           pip3 install --user meson
           python3 rebuild-libs.py all package
         env:
