@@ -229,11 +229,12 @@ def build_SDL2():
 				'--disable-directx',
 				'--disable-render',
 			],env=env,cwd=SDL2_dir + '/build')
-			immintrin_def = "#ifndef __aarch64__\n#define HAVE_IMMINTRIN_H 1\n#endif\n"
-			replace_in_file(SDL2_dir + "/build/include/SDL_config.h", [
-				("#define HAVE_IMMINTRIN_H 1\n", immintrin_def),
-				("/* #undef HAVE_IMMINTRIN_H */\n", immintrin_def)
-			])
+			#Handled by a larger-hammer header file combination block later:
+			#immintrin_def = "#ifndef __aarch64__\n#define HAVE_IMMINTRIN_H 1\n#endif\n"
+			#replace_in_file(SDL2_dir + "/build/include/SDL_config.h", [
+			#	("#define HAVE_IMMINTRIN_H 1\n", immintrin_def),
+			#	("/* #undef HAVE_IMMINTRIN_H */\n", immintrin_def)
+			#])
 		else:
 			run_command(['../configure'] + variant_configure_flags[variant] + ['--prefix=' + prefix,
 				'--disable-shared', '--enable-static',
@@ -1089,10 +1090,19 @@ def make_package():
 				else:
 					with open(f"{armpath}/{fn}", 'rb') as f: arm = f.read()
 					with open(f"{x86path}/{fn}", 'rb') as f: x86 = f.read()
-					if arm != x86:
+					if arm == x86:
+						shutil.copy(f"{armpath}/{fn}", f"{outpath}/{fn}")
+					elif fn.endswith('.h'):
+						print(f"Merged {armpath}/{fn} and {x86path}/{fn}")
+						with open(f"{outpath}/{fn}", 'wb') as f:
+							f.write(b'#ifdef __aarch64__\n//arm version:\n')
+							f.write(arm)
+							f.write(b'#else //__aarch64__\n//non-arm version:\n')
+							f.write(x86)
+							f.write(b'#endif //__aarch64__\n')
+					else:
 						print(f"ERROR: branch mis-match {armpath}/{fn} and {x86path}/{fn}")
 						sys.exit(1)
-					shutil.copy(f"{armpath}/{fn}", f"{outpath}/{fn}")
 
 	#Create a list of files to compress for release builds:
 	listfile = work_folder + '/listfile'
