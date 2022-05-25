@@ -52,7 +52,7 @@ elif platform.system() == 'Darwin':
 		'-x86':['--host=x86_64-apple-darwin'],
 		'-arm':['--host=aarch64-apple-darwin']
 	}
-	variants = list(variant_cflags.keys())
+	variants = ['-arm', '-x86']
 elif platform.system() == 'Windows':
 	target = 'windows'
 	variants = ['']
@@ -198,9 +198,10 @@ def build_SDL2():
 				'--disable-render',
 				'--enable-haptic', #force feedback framework required by joystick code anyway
 				'--disable-file', '--disable-filesystem',
-				'--disable-loadso', '--disable-power',
+				'--disable-power',
 				"--disable-sensor",
 				"--disable-hidapi",
+				'--enable-loadso', #needed for opengl
 				'--enable-sse2',
 				'--disable-oss',
 				'--disable-alsa',
@@ -1067,14 +1068,37 @@ def build_freetype():
 
 def make_package():
 	print("Packaging...")
+	if target == 'macos':
+		remove_if_exists('macos')
+		#merge the -x86 and -arm branches:
+		for (armpath, dirnames, filenames) in os.walk(target + '-arm'):
+			outpath = re.sub('^macos-arm', 'macos', armpath)
+			x86path = re.sub('^macos-arm', 'macos-x86', armpath)
+			os.makedirs(outpath, exist_ok=True)
+			for fn in filenames:
+				if fn.endswith('.a') or fn in {'opusenc','opusdec','opusinfo'}:
+					print("To merge: " + armpath + fn + " and " + x86path + fn)
+					run_command([
+						'lipo', '-create',
+						'-output', f"{outpath}/{fn}",
+						f"{armpath}/{fn}",
+						f"{x86path}/{fn}"
+					])
+				else:
+					with open(f"{armpath}/{fn}", 'rb') as f: arm = f.read()
+					with open(f"{x86path}/{fn}", 'rb') as f: x86 = f.read()
+					if arm != x86:
+						print(f"ERROR: branch mis-match {armpath}/{fn} and {x86path}/{fn}")
+						sys.exit(1)
+					shutil.copy(f"{armpath}/{fn}", f"{outpath}/{fn}")
+
 	#Create a list of files to compress for release builds:
 	listfile = work_folder + '/listfile'
 	with open(listfile, 'w') as l:
 		l.write('nest-libs/README.md\n')
-		for variant in variants:
-			for (dirpath, dirnames, filenames) in os.walk(target + variant):
-				for fn in filenames:
-					l.write('nest-libs/' + dirpath + '/' + fn + '\n')
+		for (dirpath, dirnames, filenames) in os.walk(target):
+			for fn in filenames:
+				l.write('nest-libs/' + dirpath + '/' + fn + '\n')
 	#Eventually might do this:
 	#Also create a package directory because of the unique way in which artifact uploads work :-/
 	#remove_if_exists(target + variant + "/package/")
