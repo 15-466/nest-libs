@@ -1070,6 +1070,8 @@ def make_package():
 	print("Packaging...")
 	if target == 'macos':
 		remove_if_exists('macos')
+
+		subprocess.run(['diff', '-r', 'macos-arm', 'macos-x86'],check=False) #DEBUG: what's actually different?
 		#merge the -x86 and -arm branches:
 		for (armpath, dirnames, filenames) in os.walk(target + '-arm'):
 			outpath = re.sub('^macos-arm', 'macos', armpath)
