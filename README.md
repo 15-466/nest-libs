@@ -29,9 +29,9 @@ The course's base-code `Jamfile`s are set up to work properly if the `nest-libs/
 
 ## Windows Notes
 
-Libraries compiled with, and intended to be used with, Visual Studio Community 2019.
+Libraries compiled with, and intended to be used with, Visual Studio 2022.
 
-Windows releases also include ftjam (`jam.exe`) and a convenient script to launch a VS2019 command prompt with jam in the path and `JAM_TOOLSET`. See [windows/jam](windows/jam). You may need to edit the shortcut and/or bat file to match your particular installation of Visual Studio.
+Windows releases also include ftjam (`jam.exe`) and a convenient script to launch a VS2022 command prompt with jam in the path and `JAM_TOOLSET`. See [windows/jam](windows/jam). You may need to edit the shortcut and/or bat file to match your particular installation of Visual Studio.
 
 ## TODO
 
