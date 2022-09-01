@@ -30,6 +30,7 @@ variant = ''
 variant_cflags = { '':'' }
 variant_cmake_flags = { '':[''] }
 variant_configure_flags = { '':[''] }
+variant_env = { '':{} }
 
 
 jobs = os.cpu_count() + 1
@@ -52,7 +53,11 @@ elif platform.system() == 'Darwin':
 		'-x86':['--host=x86_64-apple-darwin'],
 		'-arm':['--host=aarch64-apple-darwin']
 	}
-	variants = ['-arm', '-x86']
+	variant_env = {
+		'-x86':{'MACOSX_DEPLOYMENT_TARGET':'10.9'},
+		'-arm':{'MACOSX_DEPLOYMENT_TARGET':'11'}
+	}
+	variants = ['-x86','-arm']
 elif platform.system() == 'Windows':
 	target = 'windows'
 	variants = ['']
@@ -193,6 +198,8 @@ def build_SDL2():
 		prefix = os.getcwd() + '/' + SDL2_dir + '/out'
 		if target == 'macos':
 			env['CFLAGS'] = variant_cflags[variant]
+			for key in variant_env[variant].keys():
+				env[key] = variant_env[variant][key]
 			run_command(['../configure'] + variant_configure_flags[variant] + ['--prefix=' + prefix,
 				'--disable-shared', '--enable-static',
 				'--disable-render',
@@ -355,6 +362,8 @@ def build_zlib():
 		env = os.environ.copy()
 		env['prefix'] = 'out'
 		env['CFLAGS'] = variant_cflags[variant]
+		for key in variant_env[variant].keys():
+			env[key] = variant_env[variant][key]
 		#NOTE: not passing variant_configure_flags because this isn't really a (recent) autoconf script:
 		run_command(['./configure', '--static'], env=env, cwd=zlib_dir)
 		run_command(['make'], cwd=zlib_dir)
@@ -409,6 +418,8 @@ def build_libpng():
 		env['CPPFLAGS'] = env['CPPFLAGS'] + ' ' + variant_cflags[variant]
 		env['CFLAGS'] = env['CFLAGS'] + ' ' + variant_cflags[variant]
 		env['LDFLAGS'] = '-L../../' + target + variant + '/zlib/lib'
+		for key in variant_env[variant].keys():
+			env[key] = variant_env[variant][key]
 		run_command(['./configure'] + variant_configure_flags[variant] + [
 			'--prefix=' + prefix,
 			'--with-zlib-prefix=../../' + target + variant + '/zlib',
@@ -470,6 +481,8 @@ def build_libogg():
 		env['CPPFLAGS'] = '-O2 ' + variant_cflags[variant]
 		env['CFLAGS'] = '-O2 ' + variant_cflags[variant]
 		#env['LDFLAGS'] = '-L../../' + target + variant + '/zlib/lib'
+		for key in variant_env[variant].keys():
+			env[key] = variant_env[variant][key]
 		run_command(['./configure'] + variant_configure_flags[variant] + [
 			'--prefix=' + prefix,
 			'--disable-dependency-tracking',
@@ -536,6 +549,8 @@ def build_libopus():
 		env = os.environ.copy()
 		env['CPPFLAGS'] = '-O2 ' + variant_cflags[variant]
 		env['CFLAGS'] = '-O2 ' + variant_cflags[variant]
+		for key in variant_env[variant].keys():
+			env[key] = variant_env[variant][key]
 		run_command(['./configure'] + variant_configure_flags[variant] + [
 			'--prefix=' + prefix,
 			'--disable-dependency-tracking',
@@ -612,6 +627,8 @@ def build_libopusenc():
 
 		env['DEPS_CFLAGS'] = '-I../../' + target + variant + '/libogg/include -I../../' + target + variant + '/libopus/include'
 		env['DEPS_LIBS'] = '-L../../' + target + variant + '/libogg/lib -L../../' + target + variant + '/libopus/lib -lopus'
+		for key in variant_env[variant].keys():
+			env[key] = variant_env[variant][key]
 		run_command(['./configure'] + variant_configure_flags[variant] + [
 			'--prefix=' + prefix,
 			'--disable-dependency-tracking',
@@ -685,6 +702,8 @@ def build_opusfile():
 		env['CFLAGS'] = '-O2 ' + variant_cflags[variant]
 		env['DEPS_CFLAGS'] = '-I../../' + target + variant + '/libogg/include -I../../' + target + variant + '/libopus/include'
 		env['DEPS_LIBS'] = '-L../../' + target + variant + '/libogg/lib -L../../' + target + variant + '/libopus/lib'
+		for key in variant_env[variant].keys():
+			env[key] = variant_env[variant][key]
 		#env['LDFLAGS'] = '-L../../' + target + variant + '/zlib/lib'
 		run_command(['./configure'] + variant_configure_flags[variant] + [
 			'--prefix=' + prefix,
@@ -794,6 +813,8 @@ def build_opustools():
 		env['LIBOPUSENC_CFLAGS'] = '-I../../' + target + variant + '/libopusenc/include'
 		env['LIBOPUSENC_LIBS'] = '-L../../' + target + variant + '/libopusenc/lib -lopusenc'
 		env['HAVE_PKG_CONFIG'] = 'no'
+		for key in variant_env[variant].keys():
+			env[key] = variant_env[variant][key]
 
 		#seems like with no pkg config, the values of these variables are not respected, so they need to be added to CFLAGS/LIBS directly:
 		env['CFLAGS'] = (env['CFLAGS']
@@ -926,6 +947,8 @@ def build_harfbuzz():
 				assert False
 			f.close()
 		env = os.environ.copy()
+		for key in variant_env[variant].keys():
+			env[key] = variant_env[variant][key]
 		run_command([
 			"meson", "setup", "build"]
 			+ cross_file + [
@@ -1026,6 +1049,8 @@ def build_freetype():
 	env = os.environ.copy()
 	env['CFLAGS'] = variant_cflags[variant]
 	env['CXXFLAGS'] = variant_cflags[variant]
+	for key in variant_env[variant].keys():
+		env[key] = variant_env[variant][key]
 	run_command([
 		"cmake",
 		"-B", "build",
