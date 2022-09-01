@@ -17,7 +17,7 @@ Contents:
 
 ## Usage
 
-The course's base-code `Jamfile`s are set up to work properly if the `nest-libs/` directory has the same parent as your clone of the `15-466-f*-base*` directory:
+The course's base-code `Maekfile.js` and/or `Jamfile` is set up to work properly if the `nest-libs/` directory has the same parent as your clone of the `15-466-f*-base*` directory:
 
 ```
 15-466-stuff/ #or whatever you call it
