@@ -73,13 +73,13 @@ if target == 'macos':
 
 work_folder = "work"
 
-SDL2_filebase = "SDL2-2.0.22"
+SDL2_filebase = "SDL2-2.28.2"
 SDL2_urlbase = "https://www.libsdl.org/release/" + SDL2_filebase
 
 glm_filebase = "glm-0.9.9.8"
 glm_urlbase = "https://github.com/g-truc/glm/releases/download/0.9.9.8/" + glm_filebase
 
-zlib_filebase = "zlib-1.2.12"
+zlib_filebase = "zlib-1.2.13"
 if target == 'windows':
 	#for whatever reason, zipfile releases are named oddly:
 	zlib_url = "http://zlib.net/zlib" +re.sub(r'[^0-9]','', zlib_filebase) + ".zip"
@@ -87,16 +87,16 @@ else:
 	zlib_url = "http://zlib.net/" + zlib_filebase + ".tar.gz"
 
 if target == 'windows':
-	libpng_filebase = "lpng1637"
+	libpng_filebase = "lpng1640"
 	libpng_url = "http://prdownloads.sourceforge.net/libpng/" + libpng_filebase + ".zip?download"
 else:
-	libpng_filebase = "libpng-1.6.37"
+	libpng_filebase = "libpng-1.6.40"
 	libpng_url = "http://prdownloads.sourceforge.net/libpng/" + libpng_filebase + ".tar.gz?download"
 
 libogg_filebase = "libogg-1.3.5"
 libogg_urlbase = "http://downloads.xiph.org/releases/ogg/" + libogg_filebase
 
-libopus_filebase = "opus-1.3.1"
+libopus_filebase = "opus-1.4"
 libopus_url = "https://archive.mozilla.org/pub/opus/" + libopus_filebase + ".tar.gz"
 
 opusfile_filebase = "opusfile-0.12"
@@ -108,13 +108,10 @@ libopusenc_url = "https://archive.mozilla.org/pub/opus/" + libopusenc_filebase +
 opustools_filebase = "opus-tools-0.2"
 opustools_url = "https://archive.mozilla.org/pub/opus/" + opustools_filebase + ".tar.gz"
 
-jam_file = 'ftjam-2.5.2-win32.zip'
-jam_url = 'https://sourceforge.net/projects/freetype/files/ftjam/2.5.2/' + jam_file + '/download'
-
-freetype_filebase = 'freetype-2.12.1'
+freetype_filebase = 'freetype-2.13.1'
 freetype_url = 'https://download.savannah.gnu.org/releases/freetype/' + freetype_filebase + '.tar.gz'
 
-harfbuzz_filebase = '2.9.0'
+harfbuzz_filebase = '8.1.1'
 harfbuzz_urlbase = 'https://github.com/harfbuzz/harfbuzz/archive/' + harfbuzz_filebase
 
 if not os.path.exists(work_folder):
@@ -859,16 +856,6 @@ def build_opustools():
 		shutil.copy(lib_dir + "/out/bin/opusinfo", target + variant + "/" + lib_name + "/bin/")
 
 
-def fetch_jam():
-	assert(target == 'windows')
-	remove_if_exists(work_folder + "/jam.exe")
-	remove_if_exists("windows/jam/jam.exe")
-
-	fetch_file(jam_url, work_folder + "/" + jam_file)
-	unzip_file(work_folder + "/" + jam_file, work_folder)
-	shutil.copy(work_folder + "/jam.exe", "windows/jam/")
-
-
 def build_harfbuzz():
 	lib_name = "harfbuzz"
 	lib_dir = work_folder + "/harfbuzz-" + harfbuzz_filebase
@@ -1165,13 +1152,8 @@ print("To build: " + ", ".join(to_build))
 
 if "all" in to_build:
 	to_build = [ "harfbuzz", "freetype", "SDL2", "glm", "zlib", "libpng", "libogg", "libopus", "opusfile", "libopusenc", "opus-tools"]
-	if target == 'windows':
-		to_build.append("jam")
 	if "package" in sys.argv[1:]:
 		to_build.append("package")
-
-if "jam" in to_build:
-	fetch_jam()
 
 if "freetype" in to_build:
 	for variant in variants:
