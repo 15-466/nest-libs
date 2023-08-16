@@ -109,7 +109,7 @@ opustools_filebase = "opus-tools-0.2"
 opustools_url = "https://archive.mozilla.org/pub/opus/" + opustools_filebase + ".tar.gz"
 
 freetype_filebase = 'freetype-2.13.1'
-freetype_url = 'https://download.savannah.gnu.org/releases/freetype/' + freetype_filebase + '.tar.gz'
+freetype_url = 'https://prdownloads.sourceforge.net/freetype/freetype2/2.13.1/' + freetype_filebase + '.tar.gz?download'
 
 harfbuzz_filebase = '8.1.1'
 harfbuzz_urlbase = 'https://github.com/harfbuzz/harfbuzz/archive/' + harfbuzz_filebase
