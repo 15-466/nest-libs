@@ -97,7 +97,7 @@ libogg_filebase = "libogg-1.3.5"
 libogg_urlbase = "http://downloads.xiph.org/releases/ogg/" + libogg_filebase
 
 libopus_filebase = "opus-1.4"
-libopus_url = "https://archive.mozilla.org/pub/opus/" + libopus_filebase + ".tar.gz"
+libopus_url = "https://downloads.xiph.org/releases/opus/" + libopus_filebase + ".tar.gz"
 
 opusfile_filebase = "opusfile-0.12"
 opusfile_url = "https://downloads.xiph.org/releases/opus/" + opusfile_filebase + ".tar.gz"
