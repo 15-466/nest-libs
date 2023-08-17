@@ -880,7 +880,9 @@ def build_harfbuzz():
 		('  include (FindFreetype)', '  #include (FindFreetype)  # <-- hack to avoid picking up system freetype'),
 	])
 	replace_in_file(lib_dir + "/meson.build", [
-		("if not get_option('freetype').disabled()", "if false # <--- hack to avoid freetype search"),
+		("                            required: get_option('freetype'),", "                             required: false, # <-- hack to avoid freetype search failure"),
+		("  if not freetype_dep.found() and not get_option('freetype').disabled()", "  if false # <-- more hack to avoid freetype search"),
+		#("if not get_option('freetype').disabled()", "if false # <--- hack to avoid freetype search"),
 		("if freetype_dep.found()", "if true # <--- more hack"),
 	])
 
