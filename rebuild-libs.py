@@ -79,12 +79,12 @@ SDL2_urlbase = "https://www.libsdl.org/release/" + SDL2_filebase
 glm_filebase = "glm-0.9.9.8"
 glm_urlbase = "https://github.com/g-truc/glm/releases/download/0.9.9.8/" + glm_filebase
 
-zlib_filebase = "zlib-1.2.13"
+zlib_filebase = "zlib-1.3"
 if target == 'windows':
 	#for whatever reason, zipfile releases are named oddly:
-	zlib_url = "http://zlib.net/zlib" +re.sub(r'[^0-9]','', zlib_filebase) + ".zip"
+	zlib_url = "https://zlib.net/zlib" +re.sub(r'[^0-9]','', zlib_filebase) + ".zip"
 else:
-	zlib_url = "http://zlib.net/" + zlib_filebase + ".tar.gz"
+	zlib_url = "https://zlib.net/" + zlib_filebase + ".tar.gz"
 
 if target == 'windows':
 	libpng_filebase = "lpng1640"
@@ -965,6 +965,7 @@ def build_harfbuzz():
 		"hb-aat-layout.h",
 		"hb-blob.h",
 		"hb-buffer.h",
+		"hb-cairo.h",
 		"hb-common.h",
 		"hb-coretext.h",
 		"hb-deprecated.h",
@@ -992,11 +993,13 @@ def build_harfbuzz():
 		"hb-ot-name.h",
 		"hb-ot-shape.h",
 		"hb-ot-var.h",
+		"hb-paint.h",
 		"hb-set.h",
 		"hb-shape.h",
 		"hb-shape-plan.h",
 		"hb-style.h",
 		"hb-subset.h",
+		"hb-subset-repacker.h",
 		"hb-unicode.h",
 		"hb-uniscribe.h",
 		"hb-version.h"
@@ -1117,6 +1120,10 @@ def make_package():
 					else:
 						print(f"ERROR: branch mis-match {armpath}/{fn} and {x86path}/{fn}")
 						sys.exit(1)
+	
+	#create file to reflect version:
+	with open(tag, 'w') as v:
+		pass
 
 	#Create a list of files to compress for release builds:
 	listfile = work_folder + '/listfile'
