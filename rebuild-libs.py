@@ -1128,6 +1128,7 @@ def make_package():
 	#Create a list of files to compress for release builds:
 	listfile = work_folder + '/listfile'
 	with open(listfile, 'w') as l:
+		l.write('nest-libs/' + tag + '\n')
 		l.write('nest-libs/README.md\n')
 		for (dirpath, dirnames, filenames) in os.walk(target):
 			for fn in filenames:
