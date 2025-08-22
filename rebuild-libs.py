@@ -324,28 +324,9 @@ def build_glm():
 	print("Copying glm files...")
 	os.makedirs(target + variant + "/glm/include", exist_ok=True)
 	os.makedirs(target + variant + "/glm/dist", exist_ok=True)
-	shutil.copytree(glm_dir + "/glm/", target + variant + "/glm/include/glm/")
-
-	#process the "manual.md" file to extract the license notice section:
-	with open(glm_dir + "/manual.md", 'rb') as infile:
-		with open(target + variant + "/glm/dist/README-glm.txt", 'wb') as outfile:
-			in_licenses = False
-			for line in infile:
-				if b'name="section0"></a> Licenses' in line:
-					in_licenses = True
-					outfile.write(b"GLM is distributed under the following licenses:\n")
-				elif b'name="section1"' in line:
-					in_licenses = False
-				elif b'<div style="page-break-after: always;"> </div>' == line.strip():
-					pass
-				elif b'![](./doc/manual/frontpage1.png)' == line.strip():
-					pass
-				elif b'![](./doc/manual/frontpage2.png)' == line.strip():
-					pass
-				elif b'---' == line.strip():
-					pass
-				elif in_licenses:
-					outfile.write(line)
+	shutil.copytree(glm_dir, target + variant + "/glm/include/glm/")
+	os.unlink(target + variant + "/glm/include/glm/CMakeLists.txt")
+	shutil.copy(glm_dir + "/copying.txt", target + variant + "/glm/dist/README-glm.txt")
 
 
 def build_zlib():
@@ -1010,7 +991,7 @@ def build_harfbuzz():
 		"hb-shape-plan.h",
 		"hb-style.h",
 		"hb-subset.h",
-		"hb-subset-repacker.h",
+		"hb-subset-serialize.h",
 		"hb-unicode.h",
 		"hb-uniscribe.h",
 		"hb-version.h"
