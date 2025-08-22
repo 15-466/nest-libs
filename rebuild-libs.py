@@ -28,8 +28,8 @@ elif 'GITHUB_SHA' in os.environ:
 
 variant = ''
 variant_cflags = { '':'' }
-variant_cmake_flags = { '':[''] }
-variant_configure_flags = { '':[''] }
+variant_cmake_flags = { '':[] }
+variant_configure_flags = { '':[] }
 variant_env = { '':{} }
 
 
@@ -73,13 +73,13 @@ if target == 'macos':
 
 work_folder = "work"
 
-SDL2_filebase = "SDL2-2.28.2"
-SDL2_urlbase = "https://www.libsdl.org/release/" + SDL2_filebase
+SDL3_filebase = "SDL3-3.2.20"
+SDL3_urlbase = "https://github.com/libsdl-org/SDL/releases/download/release-3.2.20/" + SDL3_filebase
 
-glm_filebase = "glm-0.9.9.8"
-glm_urlbase = "https://github.com/g-truc/glm/releases/download/0.9.9.8/" + glm_filebase
+glm_filebase = "glm-1.0.1-light"
+glm_urlbase = "https://github.com/g-truc/glm/releases/download/1.0.1/" + glm_filebase
 
-zlib_filebase = "zlib-1.3"
+zlib_filebase = "zlib-1.3.1"
 if target == 'windows':
 	#for whatever reason, zipfile releases are named oddly:
 	zlib_url = "https://zlib.net/zlib" +re.sub(r'[^0-9]','', zlib_filebase) + ".zip"
@@ -87,16 +87,16 @@ else:
 	zlib_url = "https://zlib.net/" + zlib_filebase + ".tar.gz"
 
 if target == 'windows':
-	libpng_filebase = "lpng1640"
+	libpng_filebase = "lpng1650"
 	libpng_url = "http://prdownloads.sourceforge.net/libpng/" + libpng_filebase + ".zip?download"
 else:
-	libpng_filebase = "libpng-1.6.40"
+	libpng_filebase = "libpng-1.6.50"
 	libpng_url = "http://prdownloads.sourceforge.net/libpng/" + libpng_filebase + ".tar.gz?download"
 
-libogg_filebase = "libogg-1.3.5"
+libogg_filebase = "libogg-1.3.6"
 libogg_urlbase = "http://downloads.xiph.org/releases/ogg/" + libogg_filebase
 
-libopus_filebase = "opus-1.4"
+libopus_filebase = "opus-1.5"
 libopus_url = "https://downloads.xiph.org/releases/opus/" + libopus_filebase + ".tar.gz"
 
 opusfile_filebase = "opusfile-0.12"
@@ -108,10 +108,10 @@ libopusenc_url = "https://archive.mozilla.org/pub/opus/" + libopusenc_filebase +
 opustools_filebase = "opus-tools-0.2"
 opustools_url = "https://archive.mozilla.org/pub/opus/" + opustools_filebase + ".tar.gz"
 
-freetype_filebase = 'freetype-2.13.1'
-freetype_url = 'https://prdownloads.sourceforge.net/freetype/freetype2/2.13.1/' + freetype_filebase + '.tar.gz?download'
+freetype_filebase = 'freetype-2.13.3'
+freetype_url = 'https://prdownloads.sourceforge.net/freetype/freetype2/2.13.3/' + freetype_filebase + '.tar.gz?download'
 
-harfbuzz_filebase = '8.1.1'
+harfbuzz_filebase = '11.4.2'
 harfbuzz_urlbase = 'https://github.com/harfbuzz/harfbuzz/archive/' + harfbuzz_filebase
 
 if not os.path.exists(work_folder):
@@ -162,142 +162,153 @@ def fetch_file(url, filename, checksum=None):
 	print("  Fetching '" + url + "' => '" + filename + "'")
 	urllib.request.urlretrieve(url, filename)
 
-def build_SDL2():
-	SDL2_dir = work_folder + "/" + SDL2_filebase
+def build_SDL3():
+	SDL3_dir = work_folder + "/" + SDL3_filebase
 
-	print("Cleaning any existing SDL2...")
-	remove_if_exists(SDL2_dir)
-	remove_if_exists(target + variant + "/SDL2/")
+	print("Cleaning any existing SDL3...")
+	remove_if_exists(SDL3_dir)
+	remove_if_exists(target + variant + "/SDL3/")
 
-	print("Fetching SDL2...")
+	print("Fetching SDL3...")
 	if target == 'windows':
-		fetch_file(SDL2_urlbase + ".zip", work_folder + "/" + SDL2_filebase + ".zip")
-		unzip_file(work_folder + "/" + SDL2_filebase + ".zip", work_folder)
+		fetch_file(SDL3_urlbase + ".zip", work_folder + "/" + SDL3_filebase + ".zip")
+		unzip_file(work_folder + "/" + SDL3_filebase + ".zip", work_folder)
 	else:
-		fetch_file(SDL2_urlbase + ".tar.gz", work_folder + "/" + SDL2_filebase + ".tar.gz")
+		fetch_file(SDL3_urlbase + ".tar.gz", work_folder + "/" + SDL3_filebase + ".tar.gz")
 		run_command([
 			'tar',
 			'xfz',
-			SDL2_filebase + ".tar.gz"
+			SDL3_filebase + ".tar.gz"
 		], cwd=work_folder)
 
-	print("Building SDL2...")
+	print("Building SDL3...")
 	if target == 'windows':
 		run_command([
 			"msbuild", "/m",
 			"SDL.sln",
 			"/p:PlatformToolset=v142,Configuration=Release,Platform=x64",
-			"/t:SDL2,SDL2main"
-		], cwd=SDL2_dir + "/VisualC")
+			"/t:SDL3,SDL3main"
+		], cwd=SDL3_dir + "/VisualC")
 	else:
-		os.mkdir(SDL2_dir + '/build')
 		env = os.environ.copy()
-		prefix = os.getcwd() + '/' + SDL2_dir + '/out'
-		if target == 'macos':
-			env['CFLAGS'] = variant_cflags[variant]
-			for key in variant_env[variant].keys():
-				env[key] = variant_env[variant][key]
-			run_command(['../configure'] + variant_configure_flags[variant] + ['--prefix=' + prefix,
-				'--disable-shared', '--enable-static',
-				'--disable-render',
-				'--enable-haptic', #force feedback framework required by joystick code anyway
-				'--disable-file', '--disable-filesystem',
-				'--disable-power',
-				"--disable-sensor",
-				"--disable-hidapi",
-				'--enable-loadso', #needed for opengl
-				'--enable-sse2',
-				'--disable-oss',
-				'--disable-alsa',
-				'--disable-jack',
-				'--disable-esd',
-				'--disable-pulseaudio',
-				'--disable-arts',
-				'--disable-nas',
-				'--disable-diskaudio',
-				'--disable-dummyaudio',
-				'--disable-sndio',
-				'--disable-sndio-shared',
-				'--disable-fusionsound',
-				'--disable-fusionsound-shared',
-				'--disable-video-x11',
-				'--enable-video-cocoa',
-				'--disable-video-directfb',
-				'--disable-video-vulkan',
-				'--disable-video-dummy',
-				'--enable-video-opengl',
-				'--disable-video-metal',
-				'--disable-video-opengles',
-				'--enable-pthreads',
-				'--enable-pthread-sem',
-				'--disable-directx',
-				'--disable-render',
-			],env=env,cwd=SDL2_dir + '/build')
-			#Handled by a larger-hammer header file combination block later:
-			#immintrin_def = "#ifndef __aarch64__\n#define HAVE_IMMINTRIN_H 1\n#endif\n"
-			#replace_in_file(SDL2_dir + "/build/include/SDL_config.h", [
-			#	("#define HAVE_IMMINTRIN_H 1\n", immintrin_def),
-			#	("/* #undef HAVE_IMMINTRIN_H */\n", immintrin_def)
-			#])
-		else:
-			run_command(['../configure'] + variant_configure_flags[variant] + ['--prefix=' + prefix,
-				'--disable-shared', '--enable-static',
-				'--disable-render', '--disable-haptic', '--disable-file', '--disable-filesystem', '--disable-loadso', '--disable-power', '--disable-sensor', '--disable-hidapi',
-				'--enable-sse2',
-				'--disable-oss',
-				'--enable-alsa',
-				'--disable-esd',
-				'--disable-pulseaudio',
-				'--disable-arts',
-				'--disable-nas',
-				'--disable-diskaudio',
-				'--disable-dummyaudio',
-				'--disable-sndio',
-				'--enable-video-x11',
-				'--disable-video-cocoa',
-				'--disable-video-directfb',
-				'--disable-video-vulkan',
-				'--disable-video-dummy',
-				'--enable-video-opengl',
-				'--disable-video-opengles',
-				'--enable-pthreads',
-				'--enable-pthread-sem',
-				'--disable-directx',
-				'--disable-render',
-				'--enable-sdl-dlopen',
-			],env=env,cwd=SDL2_dir + '/build')
-		run_command(['make', '-j', str(jobs)], cwd=SDL2_dir + '/build')
-		run_command(['make', 'install'], cwd=SDL2_dir + '/build')
+		prefix = os.getcwd() + '/' + SDL3_dir + '/out'
+		env['CFLAGS'] = variant_cflags[variant]
+		for key in variant_env[variant].keys():
+			env[key] = variant_env[variant][key]
+		#if target == 'macos':
+		#	run_command(['../configure'] + variant_configure_flags[variant] + ['--prefix=' + prefix,
+		#		'--disable-shared', '--enable-static',
+		#		'--disable-render',
+		#		'--enable-haptic', #force feedback framework required by joystick code anyway
+		#		'--disable-file', '--disable-filesystem',
+		#		'--disable-power',
+		#		"--disable-sensor",
+		#		"--disable-hidapi",
+		#		'--enable-loadso', #needed for opengl
+		#		'--enable-sse2',
+		#		'--disable-oss',
+		#		'--disable-alsa',
+		#		'--disable-jack',
+		#		'--disable-esd',
+		#		'--disable-pulseaudio',
+		#		'--disable-arts',
+		#		'--disable-nas',
+		#		'--disable-diskaudio',
+		#		'--disable-dummyaudio',
+		#		'--disable-sndio',
+		#		'--disable-sndio-shared',
+		#		'--disable-fusionsound',
+		#		'--disable-fusionsound-shared',
+		#		'--disable-video-x11',
+		#		'--enable-video-cocoa',
+		#		'--disable-video-directfb',
+		#		'--disable-video-vulkan',
+		#		'--disable-video-dummy',
+		#		'--enable-video-opengl',
+		#		'--disable-video-metal',
+		#		'--disable-video-opengles',
+		#		'--enable-pthreads',
+		#		'--enable-pthread-sem',
+		#		'--disable-directx',
+		#		'--disable-render',
+		#	],env=env,cwd=SDL3_dir)
 
-	print("Copying SDL2 files...")
-	os.makedirs(target + variant + "/SDL2/lib", exist_ok=True)
-	os.makedirs(target + variant + "/SDL2/dist", exist_ok=True)
+		os_specific = []
+		if target == 'windows':
+			os_specific += []
+		elif target == 'linux':
+			os_specific += [
+				'-DSDL_ALSA=ON',
+				'-DSDL_ALSA_SHARED=ON',
+				'-DSDL_X11=ON',
+				'-DSDL_WAYLAND=ON',
+			]
+		elif target == 'macos':
+			os_specific += ['-DSDL_COCOA=ON']
+		run_command(['cmake'] + ['-S', '.', '-B', 'build',
+			'-DSDL_STATIC=ON',
+			'-DSDL_SHARED=OFF',
+			'-DSDL_RENDER=OFF', #'--disable-render',
+			'-DSDL_CAMERA=OFF',
+			'-DSDL_GPU=OFF',
+			'-DSDL_HAPTIC=OFF', #'--disable-haptic',
+			'-DSDL_DIALOG=OFF',
+			#'--disable-file',
+			#'--disable-filesystem',
+			#'--disable-loadso',
+			'-DSDL_POWER=OFF', #'--disable-power',
+			'-DSDL_SENSOR=OFF', #'--disable-sensor',
+			'-DSDL_HIDAPI=OFF', #'--disable-hidapi',
+			'-DSDL_MMX=ON',
+			'-DSDL_SSE=ON', #'--enable-sse2',
+			'-DSDL_SSE2=ON',
+			'-DSDL_SSE3=ON',
+			'-DSDL_SSE4_1=ON',
+			'-DSDL_SSE4_2=ON',
+			'-DSDL_AVX=ON',
+			'-DSDL_AVX2=ON',
+			'-DSDL_AVX512F=OFF',
+			'-DSDL_OSS=OFF', #'--disable-oss',
+			'-DSDL_ALSA=ON', #'--enable-alsa',
+			#'--disable-esd',
+			'-DSDL_PULSEAUDIO=OFF',#'--disable-pulseaudio',
+			'-DSDL_PULSEAUDIO_SHARED=OFF',
+			'-DSDL_PIPEWIRE=OFF',
+			'-DSDL_PIPEWIRE_SHARED=OFF',
+			'-DSDL_SNDIO=OFF', #'--disable-sndio',
+			'-DSDL_SNDIO_SHARED=OFF',
+			#'--disable-arts',
+			#'--disable-nas',
+			'-DSDL_DISKAUDIO=OFF', #'--disable-diskaudio',
+			#'--disable-dummyaudio',
+			'-DSDL_X11=ON', #'--enable-video-x11',
+			'-DSDL_WAYLAND=ON',
+			'-DSDL_OPENGL=ON', #'--enable-video-opengl',
+			'-DSDL_OPENGLES=OFF', #'--disable-video-opengles',
+			'-DSDL_PTHREADS=ON', #'--enable-pthreads',
+			'-DSDL_PTHREADS_SEM=ON', #'--enable-pthread-sem',
+			'-DSDL_VULKAN=OFF', #'--disable-video-vulkan',
+			'-DSDL_COCOA=OFF', #'--disable-video-cocoa',
+			#'--disable-video-directfb',
+			#'--disable-video-dummy',
+			'-DSDL_DIRECTX=OFF', #'--disable-directx',
+			#'--enable-sdl-dlopen',
+		] + os_specific + variant_cmake_flags[variant],env=env,cwd=SDL3_dir)
+
+		run_command(['cmake'] + ['--build', 'build', '--config', 'RelWithDebInfo'] + variant_cmake_flags[variant],env=env,cwd=SDL3_dir)
+		run_command(['cmake'] + ['--install', 'build', '--config', 'RelWithDebInfo', '--prefix', prefix] + variant_cmake_flags[variant],env=env,cwd=SDL3_dir)
+
+	print("Copying SDL3 files...")
+	os.makedirs(target + variant + "/SDL3/lib", exist_ok=True)
+	os.makedirs(target + variant + "/SDL3/dist", exist_ok=True)
 	if target == 'windows':
-		shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2.lib", target + variant + "/SDL2/lib/")
-		shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2main.lib", target + variant + "/SDL2/lib/")
-		shutil.copy(SDL2_dir + "/VisualC/x64/Release/SDL2.dll", target + variant + "/SDL2/dist/")
-		shutil.copytree(SDL2_dir + "/include/", target + variant + "/SDL2/include/")
+		shutil.copy(SDL3_dir + "/VisualC/x64/Release/SDL3.lib", target + variant + "/SDL3/lib/")
+		shutil.copy(SDL3_dir + "/VisualC/x64/Release/SDL3.dll", target + variant + "/SDL3/dist/")
+		shutil.copytree(SDL3_dir + "/include/", target + variant + "/SDL3/include/")
 	else:
-		os.makedirs(target + variant + "/SDL2/bin", exist_ok=True)
-		with open(SDL2_dir + '/out/bin/sdl2-config', 'r') as i:
-			with open(target + variant + '/SDL2/bin/sdl2-config', 'w') as o:
-				found_prefix = False
-				for line in i:
-					if re.match('^prefix=.*$', line) != None:
-						assert(not found_prefix)
-						if target == 'macos':
-							o.write("prefix=../nest-libs/" + target + "/SDL2\n") #will eventually merge into this path
-						else:
-							o.write("prefix=../nest-libs/" + target + variant + "/SDL2\n")
-						found_prefix = True
-					else:
-						o.write(line)
-				assert(found_prefix)
-		os.chmod(target + variant + '/SDL2/bin/sdl2-config', 0o744)
-		shutil.copy(SDL2_dir + "/out/lib/libSDL2.a", target + variant + "/SDL2/lib/")
-		shutil.copy(SDL2_dir + "/out/lib/libSDL2main.a", target + variant + "/SDL2/lib/")
-		shutil.copytree(SDL2_dir + "/out/include/SDL2/", target + variant + "/SDL2/include/SDL2/")
-	shutil.copy(SDL2_dir + "/README-SDL.txt", target + variant + "/SDL2/dist/")
+		shutil.copy(SDL3_dir + "/out/lib/libSDL3.a", target + variant + "/SDL3/lib/")
+		shutil.copytree(SDL3_dir + "/out/include/SDL3/", target + variant + "/SDL3/include/SDL3/")
+	shutil.copy(SDL3_dir + "/README.md", target + variant + "/SDL3/dist/README-SDL.md")
 
 
 def build_glm():
@@ -1161,7 +1172,7 @@ to_build = sys.argv[1:]
 print("To build: " + ", ".join(to_build))
 
 if "all" in to_build:
-	to_build = [ "harfbuzz", "freetype", "SDL2", "glm", "zlib", "libpng", "libogg", "libopus", "opusfile", "libopusenc", "opus-tools"]
+	to_build = [ "harfbuzz", "freetype", "SDL3", "glm", "zlib", "libpng", "libogg", "libopus", "opusfile", "libopusenc", "opus-tools"]
 	if "package" in sys.argv[1:]:
 		to_build.append("package")
 
@@ -1173,9 +1184,9 @@ if "harfbuzz" in to_build:
 	for variant in variants:
 		build_harfbuzz()
 
-if "SDL2" in to_build:
+if "SDL3" in to_build:
 	for variant in variants:
-		build_SDL2()
+		build_SDL3()
 
 if "glm" in to_build:
 	for variant in variants:
