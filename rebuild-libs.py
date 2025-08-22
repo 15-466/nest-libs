@@ -295,8 +295,8 @@ def build_SDL3():
 			#'--enable-sdl-dlopen',
 		] + os_specific + variant_cmake_flags[variant],env=env,cwd=SDL3_dir)
 
-		run_command(['cmake'] + ['--build', 'build', '--config', 'RelWithDebInfo'] + variant_cmake_flags[variant],env=env,cwd=SDL3_dir)
-		run_command(['cmake'] + ['--install', 'build', '--config', 'RelWithDebInfo', '--prefix', prefix] + variant_cmake_flags[variant],env=env,cwd=SDL3_dir)
+		run_command(['cmake'] + ['--build', 'build', '--config', 'RelWithDebInfo'],env=env,cwd=SDL3_dir)
+		run_command(['cmake'] + ['--install', 'build', '--config', 'RelWithDebInfo', '--prefix', prefix],env=env,cwd=SDL3_dir)
 
 	print("Copying SDL3 files...")
 	os.makedirs(target + variant + "/SDL3/lib", exist_ok=True)
@@ -308,7 +308,7 @@ def build_SDL3():
 	else:
 		shutil.copy(SDL3_dir + "/out/lib/libSDL3.a", target + variant + "/SDL3/lib/")
 		shutil.copytree(SDL3_dir + "/out/include/SDL3/", target + variant + "/SDL3/include/SDL3/")
-	shutil.copy(SDL3_dir + "/README.md", target + variant + "/SDL3/dist/README-SDL.md")
+	shutil.copy(SDL3_dir + "/README.md", target + variant + "/SDL3/dist/README-SDL.txt")
 
 
 def build_glm():
@@ -495,7 +495,10 @@ def build_libogg():
 		shutil.copy(lib_dir + "/out/include/ogg/os_types.h", target + variant + "/" + lib_name + "/include/ogg/")
 		if target == 'macos':
 			replace_in_file(target + variant + "/" + lib_name + "/include/ogg/os_types.h", [
-				("#  include <sys/types.h>", "#include <stdint.h>")
+				("#  include <sys/types.h>", "#include <stdint.h>"),
+				("   typedef u_int16_t ogg_uint16_t;", "   typedef uint16_t ogg_uint16_t;"),
+				("   typedef u_int32_t ogg_uint32_t;", "   typedef uint32_t ogg_uint32_t;"),
+				("   typedef u_int64_t ogg_uint64_t;", "   typedef uint64_t ogg_uint64_t;"),
 			])
 		shutil.copy(lib_dir + "/out/lib/libogg.a", target + variant + "/" + lib_name + "/lib/")
 	shutil.copy(lib_dir + "/COPYING", target + variant + "/" + lib_name + "/dist/README-libogg.txt")
