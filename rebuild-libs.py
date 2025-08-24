@@ -563,7 +563,8 @@ def build_libopus():
 	shutil.copy(lib_dir + "/out/include/opus/opus_projection.h", target + variant + "/" + lib_name + "/include/")
 
 	if target == 'windows':
-		shutil.copy(lib_dir + "/out/lib/opus.lib", target + variant + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/build/RelWithDebInfo/opus.lib", target + variant + "/" + lib_name + "/lib/")
+		shutil.copy(lib_dir + "/build/RelWithDebInfo/opus.pdb", target + variant + "/" + lib_name + "/lib/")
 	else:
 		shutil.copy(lib_dir + "/out/lib/libopus.a", target + variant + "/" + lib_name + "/lib/")
 	shutil.copy(lib_dir + "/COPYING", target + variant + "/" + lib_name + "/dist/README-libopus.txt")
