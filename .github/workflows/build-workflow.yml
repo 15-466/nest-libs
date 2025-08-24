@@ -37,7 +37,7 @@ jobs:
           asset_content_type: application/zip
       - name: Upload Artifact
         if: github.event_name == 'push'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: nest-libs-windows
           path: nest-libs-*.zip
@@ -70,7 +70,7 @@ jobs:
           asset_content_type: application/gzip
       - name: Upload Artifact
         if: github.event_name == 'push'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: nest-libs-linux
           path: nest-libs-*.tar.gz
@@ -101,7 +101,7 @@ jobs:
           asset_content_type: application/gzip
       - name: Upload Artifact
         if: github.event_name == 'push'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: nest-libs-osx
           path: nest-libs-*.tar.gz
