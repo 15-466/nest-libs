@@ -985,6 +985,7 @@ def build_harfbuzz():
 		"hb-ot-var.h",
 		"hb-paint.h",
 		"hb-set.h",
+		"hb-script-list.h",
 		"hb-shape.h",
 		"hb-shape-plan.h",
 		"hb-style.h",
