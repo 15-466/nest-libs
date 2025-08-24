@@ -3,7 +3,7 @@
 This repository's releases section contains pre-compiled library packages for our target systems: Linux, Windows, and MacOS.
 
 Contents:
- - [SDL2](http://libsdl.org/)
+ - [SDL3](http://libsdl.org/)
  - [glm](https://glm.g-truc.net/)
  - [libpng](http://www.libpng.org/pub/png/libpng.html) (static)
  - [zlib](http://www.zlib.net/) (static, required for libpng)
