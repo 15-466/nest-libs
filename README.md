@@ -3,7 +3,7 @@
 This repository's releases section contains pre-compiled library packages for our target systems: Linux, Windows, and MacOS.
 
 Contents:
- - [SDL2](http://libsdl.org/)
+ - [SDL3](http://libsdl.org/)
  - [glm](https://glm.g-truc.net/)
  - [libpng](http://www.libpng.org/pub/png/libpng.html) (static)
  - [zlib](http://www.zlib.net/) (static, required for libpng)
@@ -30,8 +30,6 @@ The course's base-code `Maekfile.js` and/or `Jamfile` is set up to work properly
 ## Windows Notes
 
 Libraries compiled with, and intended to be used with, Visual Studio 2022.
-
-Windows releases also include ftjam (`jam.exe`) and a convenient script to launch a VS2022 command prompt with jam in the path and `JAM_TOOLSET`. See [windows/jam](windows/jam). You may need to edit the shortcut and/or bat file to match your particular installation of Visual Studio.
 
 ## TODO
 
