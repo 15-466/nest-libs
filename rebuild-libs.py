@@ -96,7 +96,7 @@ else:
 libogg_filebase = "libogg-1.3.6"
 libogg_urlbase = "http://downloads.xiph.org/releases/ogg/" + libogg_filebase
 
-libopus_filebase = "opus-1.5"
+libopus_filebase = "opus-1.5.2"
 libopus_url = "https://downloads.xiph.org/releases/opus/" + libopus_filebase + ".tar.gz"
 
 opusfile_filebase = "opusfile-0.12"
@@ -186,8 +186,8 @@ def build_SDL3():
 		run_command([
 			"msbuild", "/m",
 			"SDL.sln",
-			"/p:PlatformToolset=v142,Configuration=Release,Platform=x64",
-			"/t:SDL3,SDL3main"
+			"/p:PlatformToolset=v143,Configuration=Release,Platform=x64",
+			"/t:SDL3"
 		], cwd=SDL3_dir + "/VisualC")
 	else:
 		env = os.environ.copy()
@@ -461,7 +461,7 @@ def build_libogg():
 		run_command([
 			"msbuild", "/m",
 			"libogg.sln",
-			"/p:PlatformToolset=v142,Configuration=Release,Platform=x64",
+			"/p:PlatformToolset=v143,Configuration=Release,Platform=x64",
 			"/t:libogg"
 		], cwd=lib_dir + "/win32/VS2015")
 	else:
@@ -522,55 +522,49 @@ def build_libopus():
 		run_command([ 'tar', 'xfz', libopus_filebase + ".tar.gz" ], cwd=work_folder)
 
 	print("Building " + lib_name + "...")
-	if target == 'windows':
-		#patch vcxproj to remove "WindowsTargetPlatformVersion" key:
-		replace_in_file(lib_dir + "/win32/VS2015/opus.vcxproj", [
-			('<WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>','')
-		])
-		replace_in_file(lib_dir + "/win32/VS2015/common.props", [
-			('>MultiThreaded<','>MultiThreadedDLL<')
-		])
-		run_command([
-			"msbuild", "/m",
-			"opus.sln",
-			"/p:PlatformToolset=v142,Configuration=Release,Platform=x64",
-			"/t:opus"
-		], cwd=lib_dir + "/win32/VS2015")
-	else:
-		prefix = os.getcwd() + '/' + lib_dir + '/out';
-		env = os.environ.copy()
-		env['CPPFLAGS'] = '-O2 ' + variant_cflags[variant]
-		env['CFLAGS'] = '-O2 ' + variant_cflags[variant]
-		for key in variant_env[variant].keys():
-			env[key] = variant_env[variant][key]
-		run_command(['./configure'] + variant_configure_flags[variant] + [
-			'--prefix=' + prefix,
-			'--disable-dependency-tracking',
-			'--enable-static',
-			'--disable-shared',
-			'--disable-doc',
-			'--disable-extra-programs'
-			], env=env, cwd=lib_dir);
-		run_command(['make'], cwd=lib_dir)
-		run_command(['make', 'install'], cwd=lib_dir)
-	
+
+	os.mkdir(lib_dir + "/build")
+
+	prefix = os.getcwd() + '/' + lib_dir + '/out';
+	env = os.environ.copy()
+	env['CFLAGS'] = variant_cflags[variant]
+	env['CXXFLAGS'] = variant_cflags[variant]
+	for key in variant_env[variant].keys():
+		env[key] = variant_env[variant][key]
+	run_command([
+		"cmake",
+		"-B", "build",
+		"-D", "CMAKE_BUILD_TYPE=RelWithDebInfo",
+		"-D", "OPUS_BUILD_SHARED_LIBRARY=NO",
+	] + variant_cmake_flags[variant], cwd=lib_dir, env=env)
+
+	run_command([
+		"cmake",
+		"--build", "build",
+		"--config", "RelWithDebInfo",
+		"-j", str(jobs)
+	], cwd=lib_dir, env=env)
+
+	run_command([
+		'cmake',
+		'--install', 'build',
+		'--config', 'RelWithDebInfo',
+		'--prefix', prefix],env=env,cwd=lib_dir)
+
 	print("Copying " + lib_name + " files...")
 	os.makedirs(target + variant + "/" + lib_name + "/lib", exist_ok=True)
 	os.makedirs(target + variant + "/" + lib_name + "/include", exist_ok=True)
 	os.makedirs(target + variant + "/" + lib_name + "/dist", exist_ok=True)
+
+	shutil.copy(lib_dir + "/out/include/opus/opus.h", target + variant + "/" + lib_name + "/include/")
+	shutil.copy(lib_dir + "/out/include/opus/opus_multistream.h", target + variant + "/" + lib_name + "/include/")
+	shutil.copy(lib_dir + "/out/include/opus/opus_types.h", target + variant + "/" + lib_name + "/include/")
+	shutil.copy(lib_dir + "/out/include/opus/opus_defines.h", target + variant + "/" + lib_name + "/include/")
+	shutil.copy(lib_dir + "/out/include/opus/opus_projection.h", target + variant + "/" + lib_name + "/include/")
+
 	if target == 'windows':
-		shutil.copy(lib_dir + "/win32/VS2015/x64/Release/opus.lib", target + variant + "/" + lib_name + "/lib/")
-		shutil.copy(lib_dir + "/include/opus.h", target + variant + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/include/opus_multistream.h", target + variant + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/include/opus_types.h", target + variant + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/include/opus_defines.h", target + variant + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/include/opus_projection.h", target + variant + "/" + lib_name + "/include/")
+		shutil.copy(lib_dir + "/out/lib/opus.lib", target + variant + "/" + lib_name + "/lib/")
 	else:
-		shutil.copy(lib_dir + "/out/include/opus/opus.h", target + variant + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/out/include/opus/opus_multistream.h", target + variant + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/out/include/opus/opus_types.h", target + variant + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/out/include/opus/opus_defines.h", target + variant + "/" + lib_name + "/include/")
-		shutil.copy(lib_dir + "/out/include/opus/opus_projection.h", target + variant + "/" + lib_name + "/include/")
 		shutil.copy(lib_dir + "/out/lib/libopus.a", target + variant + "/" + lib_name + "/lib/")
 	shutil.copy(lib_dir + "/COPYING", target + variant + "/" + lib_name + "/dist/README-libopus.txt")
 
@@ -608,7 +602,7 @@ def build_libopusenc():
 		run_command([
 			"msbuild", "/m",
 			"opusenc.sln",
-			"/p:PlatformToolset=v142,Configuration=Release,Platform=x64",
+			"/p:PlatformToolset=v143,Configuration=Release,Platform=x64",
 			"/t:opusenc"
 		], cwd=lib_dir + "/win32/VS2015")
 	else:
@@ -684,7 +678,7 @@ def build_opusfile():
 		run_command([
 			"msbuild", "/m",
 			"opusfile.sln",
-			"/p:PlatformToolset=v142,Configuration=Release-NoHTTP,Platform=x64",
+			"/p:PlatformToolset=v143,Configuration=Release-NoHTTP,Platform=x64",
 			"/t:opusfile"
 		], cwd=lib_dir + "/win32/VS2015")
 	else:
@@ -785,7 +779,7 @@ def build_opustools():
 		run_command([
 			"msbuild", "/m",
 			"opus-tools.sln",
-			"/p:PlatformToolset=v142,Configuration=Release,Platform=x64",
+			"/p:PlatformToolset=v143,Configuration=Release,Platform=x64",
 			"/t:opusdec,opusenc,opusinfo"
 		], cwd=lib_dir + "/win32/VS2015")
 	else:
