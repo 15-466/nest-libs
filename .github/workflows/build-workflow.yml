@@ -11,7 +11,7 @@ jobs:
     runs-on: windows-latest
     if: (contains(github.event.head_commit.message, 'onlyMac') || contains(github.event.head_commit.message, 'onlyLinux')) != true
     steps:
-	  - uses: ilammy/msvc-dev-cmd@v1.13.0
+      - uses: ilammy/msvc-dev-cmd@v1.13.0
       - name: Checkout Code
         uses: actions/checkout@v7
       - name: Build Code

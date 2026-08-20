@@ -871,7 +871,8 @@ def build_harfbuzz():
 	])
 	replace_in_file(lib_dir + "/meson.build", [
 		("                            required: get_option('freetype'),", "                             required: false, # <-- hack to avoid freetype search failure"),
-		("  if not freetype_dep.found() and not get_option('freetype').disabled()", "  if false # <-- more hack to avoid freetype search"),
+		#("  if not freetype_dep.found() and not get_option('freetype').disabled()", "  if false # <-- more hack to avoid freetype search"),
+		("freetype_dep = dependency('freetype2', version: freetype_min_version, required: get_option('freetype'), default_options: ['harfbuzz=disabled'])", "freetype_dep = dependency('', required: false) #<--- hack to avoid freetype search"),
 		#("if not get_option('freetype').disabled()", "if false # <--- hack to avoid freetype search"),
 		("if freetype_dep.found()", "if true # <--- more hack"),
 	])
