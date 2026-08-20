@@ -77,7 +77,7 @@ SDL3_filebase = "SDL3-3.2.20"
 SDL3_urlbase = "https://github.com/libsdl-org/SDL/releases/download/release-3.4.14/" + SDL3_filebase
 
 glm_filebase = "glm-1.0.3"
-glm_urlbase = "https://github.com/g-truc/glm/releases/download/1.0.1/" + glm_filebase
+glm_urlbase = "https://github.com/g-truc/glm/releases/download/1.0.3/" + glm_filebase
 
 zlib_filebase = "zlib-1.3.2"
 if target == 'windows':
@@ -103,7 +103,7 @@ opusfile_filebase = "opusfile-0.12"
 opusfile_url = "https://downloads.xiph.org/releases/opus/" + opusfile_filebase + ".tar.gz"
 
 libopusenc_filebase = "libopusenc-0.3"
-libopusenc_url = "https://archive.mozilla.org/pub/opus/" + libopusenc_filebase + ".tar.gz"
+libopusenc_url = "https://downloads.xiph.org/releases/opus/" + libopusenc_filebase + ".tar.gz"
 
 opustools_filebase = "opus-tools-0.2"
 opustools_url = "https://archive.mozilla.org/pub/opus/" + opustools_filebase + ".tar.gz"
