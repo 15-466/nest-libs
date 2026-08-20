@@ -74,12 +74,12 @@ if target == 'macos':
 work_folder = "work"
 
 SDL3_filebase = "SDL3-3.2.20"
-SDL3_urlbase = "https://github.com/libsdl-org/SDL/releases/download/release-3.2.20/" + SDL3_filebase
+SDL3_urlbase = "https://github.com/libsdl-org/SDL/releases/download/release-3.4.14/" + SDL3_filebase
 
-glm_filebase = "glm-1.0.1-light"
+glm_filebase = "glm-1.0.3"
 glm_urlbase = "https://github.com/g-truc/glm/releases/download/1.0.1/" + glm_filebase
 
-zlib_filebase = "zlib-1.3.1"
+zlib_filebase = "zlib-1.3.2"
 if target == 'windows':
 	#for whatever reason, zipfile releases are named oddly:
 	zlib_url = "https://zlib.net/zlib" +re.sub(r'[^0-9]','', zlib_filebase) + ".zip"
@@ -87,31 +87,31 @@ else:
 	zlib_url = "https://zlib.net/" + zlib_filebase + ".tar.gz"
 
 if target == 'windows':
-	libpng_filebase = "lpng1650"
+	libpng_filebase = "lpng1658"
 	libpng_url = "http://prdownloads.sourceforge.net/libpng/" + libpng_filebase + ".zip?download"
 else:
-	libpng_filebase = "libpng-1.6.50"
+	libpng_filebase = "libpng-1.6.58"
 	libpng_url = "http://prdownloads.sourceforge.net/libpng/" + libpng_filebase + ".tar.gz?download"
 
 libogg_filebase = "libogg-1.3.6"
 libogg_urlbase = "http://downloads.xiph.org/releases/ogg/" + libogg_filebase
 
-libopus_filebase = "opus-1.5.2"
+libopus_filebase = "opus-1.6.1"
 libopus_url = "https://downloads.xiph.org/releases/opus/" + libopus_filebase + ".tar.gz"
 
 opusfile_filebase = "opusfile-0.12"
 opusfile_url = "https://downloads.xiph.org/releases/opus/" + opusfile_filebase + ".tar.gz"
 
-libopusenc_filebase = "libopusenc-0.2.1"
+libopusenc_filebase = "libopusenc-0.3"
 libopusenc_url = "https://archive.mozilla.org/pub/opus/" + libopusenc_filebase + ".tar.gz"
 
 opustools_filebase = "opus-tools-0.2"
 opustools_url = "https://archive.mozilla.org/pub/opus/" + opustools_filebase + ".tar.gz"
 
-freetype_filebase = 'freetype-2.13.3'
+freetype_filebase = 'freetype-2.14.3'
 freetype_url = 'https://prdownloads.sourceforge.net/freetype/freetype2/2.13.3/' + freetype_filebase + '.tar.gz?download'
 
-harfbuzz_filebase = '11.4.2'
+harfbuzz_filebase = '14.3.1'
 harfbuzz_urlbase = 'https://github.com/harfbuzz/harfbuzz/archive/' + harfbuzz_filebase
 
 if not os.path.exists(work_folder):
