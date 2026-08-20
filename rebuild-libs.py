@@ -73,7 +73,7 @@ if target == 'macos':
 
 work_folder = "work"
 
-SDL3_filebase = "SDL3-3.2.20"
+SDL3_filebase = "SDL3-3.4.14"
 SDL3_urlbase = "https://github.com/libsdl-org/SDL/releases/download/release-3.4.14/" + SDL3_filebase
 
 glm_filebase = "glm-1.0.3"
