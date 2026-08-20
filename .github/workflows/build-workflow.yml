@@ -11,17 +11,16 @@ jobs:
     runs-on: windows-latest
     if: (contains(github.event.head_commit.message, 'onlyMac') || contains(github.event.head_commit.message, 'onlyLinux')) != true
     steps:
+	  - uses: ilammy/msvc-dev-cmd@v1.13.0
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
       - name: Build Code
         shell: cmd
-        #maybe this from will work: https://github.com/cisco/ChezScheme/blob/main/c/vs.bat
         run: |
           dir/w
           echo ProgramW6432: %ProgramW6432%
           echo %ProgramW6432%\Microsoft Visual Studio\2026\Enterprise\VC\Auxiliary\Build\vcvarsall.bat "amd64"
           dir "%ProgramW6432%\Microsoft Visual Studio\2026\Enterprise\VC\Auxiliary\Build\"
-          call "%ProgramW6432%\Microsoft Visual Studio\2026\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           python rebuild-libs.py all package
         env:
           TAG_NAME: ${{ github.event.release.tag_name }}
@@ -48,7 +47,7 @@ jobs:
     if: (contains(github.event.head_commit.message, 'onlyWindows') || contains(github.event.head_commit.message, 'onlyMac')) != true
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
       - name: Build Code
         shell: bash
         run: |
@@ -82,7 +81,7 @@ jobs:
     if: (contains(github.event.head_commit.message, 'onlyWindows') || contains(github.event.head_commit.message, 'onlyLinux')) != true
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
       - name: Build Code
         shell: bash
         run: |
