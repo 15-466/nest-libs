@@ -29,7 +29,7 @@ The course's base-code `Maekfile.js` and/or `Jamfile` is set up to work properly
 
 ## Windows Notes
 
-Libraries compiled with, and intended to be used with, Visual Studio 2022.
+Libraries compiled with, and intended to be used with, Visual Studio 2026.
 
 ## TODO
 
