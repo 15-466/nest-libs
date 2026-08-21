@@ -130,17 +130,19 @@ def remove_if_exists(path):
 	else:
 		os.remove(path)
 
-def unzip_file(filename, folder):
+def unzip_file(filename, folder, *args):
 	if target == 'windows':
 		run_command([
 			"C:\\Program Files\\7-Zip\\7z.exe",
-			"x",
+			"x"
+			] + list(args) + [
 			"-o" + folder,
 			filename
 		])
 	else:
 		run_command([
 			"unzip",
+			] + list(args) + [
 			"-q",
 			filename,
 			"-d", folder
@@ -156,11 +158,17 @@ def replace_in_file(filename, replacements):
 				o.write(line)
 
 def fetch_file(url, filename, checksum=None):
+	filename = filename
 	if os.path.exists(filename):
 		print("  File '" + filename + "' exists; TODO: check checksum.")
 		return
-	print("  Fetching '" + url + "' => '" + filename + "'")
-	urllib.request.urlretrieve(url, filename)
+	for rep in range(0,3):
+		try:
+			print("  Fetching '" + url + "' => '" + filename + "'")
+			urllib.request.urlretrieve(url, filename)
+			return
+		except Exception as e:
+			print(f"ERROR (retry {rep}): {e}")
 
 def build_SDL3():
 	SDL3_dir = work_folder + "/" + SDL3_filebase
@@ -288,7 +296,7 @@ def build_glm():
 	print("Copying glm files...")
 	os.makedirs(target + variant + "/glm/include", exist_ok=True)
 	os.makedirs(target + variant + "/glm/dist", exist_ok=True)
-	shutil.copytree(glm_dir, target + variant + "/glm/include/glm/")
+	shutil.copytree(glm_dir + "/glm", target + variant + "/glm/include/glm/")
 	os.unlink(target + variant + "/glm/include/glm/CMakeLists.txt")
 	shutil.copy(glm_dir + "/copying.txt", target + variant + "/glm/dist/README-glm.txt")
 
@@ -819,13 +827,11 @@ def build_harfbuzz():
 	remove_if_exists(lib_dir)
 
 	print("Fetching " + lib_name + "...")
-	#if target == 'windows':
 	fetch_file(harfbuzz_urlbase + ".zip", work_folder + "/" + harfbuzz_filebase + ".zip")
-	unzip_file(work_folder + "/" + harfbuzz_filebase + ".zip", work_folder)
-	#else:
-	#	fetch_file(harfbuzz_urlbase + ".zip", work_folder + "/" + harfbuzz_filebase + ".zip")
-	#	unzip_file(work_folder + "/" + harfbuzz_filebase + ".zip", work_folder)
-	#	pass
+	if target == 'windows':
+		unzip_file(work_folder + "/" + harfbuzz_filebase + ".zip", work_folder, '-xr!CLAUDE.md') #exclude symbolic link
+	else:
+		unzip_file(work_folder + "/" + harfbuzz_filebase + ".zip", work_folder)
 	
 	print("Building " + lib_name + "...")
 
@@ -852,11 +858,11 @@ def build_harfbuzz():
 			"-DFREETYPE_LIBRARY=..\\..\\..\\" + target + variant + "\\freetype\\lib\\freetype",
 		] + variant_cmake_flags[variant], env=env, cwd=lib_dir)
 		run_command([
-			"msbuild", "/m",
-			"harfbuzz.sln",
-			"/t:ALL_BUILD",
-			"/p:Configuration=RelWithDebInfo"
-		],env=env, cwd=lib_dir + "/build")
+			"cmake",
+			"--build", "build",
+			"--config", "RelWithDebInfo",
+			"-j", str(jobs)
+		],env=env, cwd=lib_dir)
 	else:
 		cross_file = []
 		if target == 'macos':
