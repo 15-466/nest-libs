@@ -195,43 +195,6 @@ def build_SDL3():
 		env['CFLAGS'] = variant_cflags[variant]
 		for key in variant_env[variant].keys():
 			env[key] = variant_env[variant][key]
-		#if target == 'macos':
-		#	run_command(['../configure'] + variant_configure_flags[variant] + ['--prefix=' + prefix,
-		#		'--disable-shared', '--enable-static',
-		#		'--disable-render',
-		#		'--enable-haptic', #force feedback framework required by joystick code anyway
-		#		'--disable-file', '--disable-filesystem',
-		#		'--disable-power',
-		#		"--disable-sensor",
-		#		"--disable-hidapi",
-		#		'--enable-loadso', #needed for opengl
-		#		'--enable-sse2',
-		#		'--disable-oss',
-		#		'--disable-alsa',
-		#		'--disable-jack',
-		#		'--disable-esd',
-		#		'--disable-pulseaudio',
-		#		'--disable-arts',
-		#		'--disable-nas',
-		#		'--disable-diskaudio',
-		#		'--disable-dummyaudio',
-		#		'--disable-sndio',
-		#		'--disable-sndio-shared',
-		#		'--disable-fusionsound',
-		#		'--disable-fusionsound-shared',
-		#		'--disable-video-x11',
-		#		'--enable-video-cocoa',
-		#		'--disable-video-directfb',
-		#		'--disable-video-vulkan',
-		#		'--disable-video-dummy',
-		#		'--enable-video-opengl',
-		#		'--disable-video-metal',
-		#		'--disable-video-opengles',
-		#		'--enable-pthreads',
-		#		'--enable-pthread-sem',
-		#		'--disable-directx',
-		#		'--disable-render',
-		#	],env=env,cwd=SDL3_dir)
 
 		os_specific = []
 		if target == 'windows':
@@ -265,6 +228,7 @@ def build_SDL3():
 			'-DSDL_SSE3=ON',
 			'-DSDL_SSE4_1=ON',
 			'-DSDL_SSE4_2=ON',
+			'-DSDL_TESTS=OFF',
 			'-DSDL_AVX=ON',
 			'-DSDL_AVX2=ON',
 			'-DSDL_AVX512F=OFF',
@@ -909,6 +873,7 @@ def build_harfbuzz():
 					[binaries]
 					c=['clang', '-target', 'x86_64-apple-macos10.9', '-mmacosx-version-min=10.9']
 					cpp=['clang++', '-target', 'x86_64-apple-macos10.9', '-mmacosx-version-min=10.9']
+					objcpp=['clang++', '-target', 'x86_64-apple-macos10.9', '-mmacosx-version-min=10.9']
 					strip='strip'
 				""".encode('utf8'))
 			elif variant == '-arm':
@@ -921,6 +886,7 @@ def build_harfbuzz():
 					[binaries]
 					c=['clang', '-target', 'arm64-apple-macos11', '-mmacosx-version-min=11']
 					cpp=['clang++', '-target', 'arm64-apple-macos11', '-mmacosx-version-min=11']
+					objcpp=['clang++', '-target', 'arm64-apple-macos11', '-mmacosx-version-min=11']
 					strip='strip'
 				""".encode('utf8'))
 			else:
@@ -935,6 +901,8 @@ def build_harfbuzz():
 			"-Dbuildtype=debugoptimized",
 			"-Ddefault_library=static",
 			"-Dfreetype=enabled",
+			"-Dtests=disabled",
+			"-Dutilities=disabled",
 			"-Dcpp_args=-I../../../" + target + variant + "/freetype/include",
 		], env=env, cwd=lib_dir)
 		run_command([
